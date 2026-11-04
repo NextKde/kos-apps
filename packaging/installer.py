@@ -18,6 +18,7 @@ import shutil
 import signal
 import socket
 import ssl
+import stat
 import subprocess
 import sys
 import tarfile
@@ -299,8 +300,9 @@ RETIRED_IDS = {"calendar": "org.nextkde.Calendar", "calculator": "org.nextkde.Ca
 
 
 class Installer:
-    def __init__(self, key, action, requested=None, client=None, emit=None):
+    def __init__(self, key, action, requested=None, client=None, emit=None, confirmed=False, expected_plan=None):
         self.key, self.action, self.requested = key, action, requested
+        self.confirmed, self.expected_plan = confirmed, expected_plan
         self.repo, self.app_id, self.executables = APPS[key]
         home = Path.home()
         self.data = Path(os.environ.get("XDG_DATA_HOME", str(home / ".local/share")))
@@ -323,9 +325,17 @@ class Installer:
 
     @contextlib.contextmanager
     def lock(self):
-        secure_dir(self.state)
-        path = self.state / "lock"
-        fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        if self.action == "cleanup-plan":
+            for part in (self.state, *self.state.parents):
+                if part.is_symlink():
+                    fail("UNSAFE_PATH", "Storage directory is a symlink", path=str(part))
+            if not present(self.state / "lock"):
+                yield
+                return
+            fd = os.open(self.state / "lock", os.O_RDONLY | os.O_NOFOLLOW)
+        else:
+            secure_dir(self.state)
+            fd = os.open(self.state / "lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         try:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -397,11 +407,94 @@ class Installer:
         finally:
             os.close(root_fd)
 
+    def cleanup_plan(self, info):
+        revisions = list(dict.fromkeys((info or {}).get("versions", [])))
+        current = (info or {}).get("revision")
+        previous = next((r for r in reversed(revisions) if r != current), None)
+        keep = [r for r in revisions if r in (current, previous)]
+        remove = [r for r in revisions if r not in keep]
+        total = 0
+        def inaccessible(error):
+            raise error
+        for revision in remove:
+            directory = self.root / "versions" / revision
+            if directory.lstat().st_uid != os.getuid():
+                fail("UNSAFE_PATH", "Old version is not owned by this user", path=str(directory))
+            for parent, directories, files in os.walk(directory, followlinks=False, onerror=inaccessible):
+                for name in directories + files:
+                    item = Path(parent) / name
+                    metadata = item.lstat()
+                    if metadata.st_uid != os.getuid() or not (stat.S_ISDIR(metadata.st_mode)
+                            or stat.S_ISREG(metadata.st_mode) or stat.S_ISLNK(metadata.st_mode)):
+                        fail("UNSAFE_PATH", "Owned version contains an unsafe object", path=str(item))
+                    if stat.S_ISREG(metadata.st_mode):
+                        total += metadata.st_size
+        return {**self.status_details(info), "keptRevisions": keep, "removedRevisions": remove,
+                "reclaimableBytes": total, "personalDataPreserved": True,
+                "planToken": hashlib.sha256(json.dumps(info, sort_keys=True).encode()).hexdigest()}
+
+    def recover_prune(self, transaction):
+        old, new = transaction.get("old"), transaction.get("new")
+        self.validate_journal_info(old)
+        self.validate_journal_info(new)
+        if not old or not new or transaction.get("candidate") is not None:
+            fail("CORRUPT_STATE", "Prune journal is invalid")
+        removed = transaction.get("removed")
+        revisions = list(dict.fromkeys(old["versions"]))
+        previous = next((r for r in reversed(revisions) if r != old["revision"]), None)
+        keep = [r for r in revisions if r in (old["revision"], previous)]
+        expected = {**old, "versions": keep}
+        if (new != expected or removed != [r for r in revisions if r not in keep]
+                or read_json(self.metadata) not in (old, new)):
+            fail("CORRUPT_STATE", "Prune journal changes unowned state")
+        if not self.current.is_symlink() or os.readlink(self.current) != str(self.root / "versions" / old["revision"]):
+            fail("CORRUPT_STATE", "Current activation changed during cleanup")
+        for path, target in old["links"].items():
+            if not Path(path).is_symlink() or os.readlink(path) != target:
+                fail("CORRUPT_STATE", "Activation changed during cleanup", path=path)
+            if any(parent.is_symlink() for parent in Path(path).parents):
+                fail("UNSAFE_PATH", "Activation parent changed during cleanup", path=path)
+        # Commit the reduced inventory before deleting anything. The durable journal
+        # retains ownership of removed directories until all deletions are fsynced.
+        for directory in (self.root, self.root / "versions"):
+            secure_dir(directory)
+            if directory.stat().st_uid != os.getuid():
+                fail("UNSAFE_PATH", "Version storage is not owned by this user")
+        for revision in keep:
+            path = self.root / "versions" / revision
+            if path.is_symlink() or not path.is_dir():
+                fail("CORRUPT_STATE", "Retained version is unavailable")
+        write_json(self.metadata, new)
+        fd = os.open(self.root / "versions", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            for revision in removed:
+                try:
+                    metadata = os.stat(revision, dir_fd=fd, follow_symlinks=False)
+                except FileNotFoundError:
+                    continue
+                if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid():
+                    fail("UNSAFE_PATH", "Prune version was replaced")
+                if not shutil.rmtree.avoids_symlink_attacks:
+                    fail("UNSAFE_PATH", "This platform cannot safely remove version directories")
+                shutil.rmtree(revision, dir_fd=fd)
+                os.fsync(fd)
+        finally:
+            os.close(fd)
+        self.journal.unlink()
+        fd = os.open(self.state, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
     def recover(self):
         """Idempotent redo/undo under the app lock; never infer ownership."""
         if not present(self.journal):
             return
         transaction = read_json(self.journal)
+        if isinstance(transaction, dict) and transaction.get("schemaVersion") == 1 and transaction.get("kind") == "prune":
+            self.recover_prune(transaction)
+            return
         if not isinstance(transaction, dict) or transaction.get("schemaVersion") != 1 or transaction.get("kind") not in ("install", "uninstall"):
             fail("CORRUPT_STATE", "Transaction journal is invalid")
         old, new = transaction.get("old"), transaction.get("new")
@@ -766,9 +859,28 @@ class Installer:
                 for parent in (directory, *directory.parents):
                     if parent.is_symlink():
                         fail("UNSAFE_PATH", "Managed storage has a symlink ancestor", path=str(parent))
-            self.recover()
+            if self.action == "cleanup-plan" and present(self.journal):
+                fail("RECOVERY_REQUIRED", "A pending transaction must be recovered before cleanup can be previewed")
+            if self.action != "cleanup-plan":
+                self.recover()
             info = self.owned()
             self.installed_info = info
+            if self.action in ("cleanup-plan", "prune"):
+                if not info:
+                    return "NOT_INSTALLED", self.status_details(None)
+                plan = self.cleanup_plan(info)
+                if self.action == "cleanup-plan" or not plan["removedRevisions"]:
+                    return "CLEANUP_PLAN" if self.action == "cleanup-plan" else "NOTHING_TO_PRUNE", plan
+                if self.expected_plan is not None and self.expected_plan != plan["planToken"]:
+                    fail("PLAN_CHANGED", "Owned versions changed after preview; inspect cleanup-plan again")
+                if not self.confirmed:
+                    fail("CONFIRMATION_REQUIRED", "Preview cleanup-plan, then use prune --yes to remove only the listed old program versions", **plan)
+                new = {**info, "versions": plan["keptRevisions"]}
+                write_json(self.journal, {"schemaVersion": 1, "kind": "prune", "candidate": None,
+                                         "old": info, "new": new, "removed": plan["removedRevisions"]})
+                self.recover()
+                self.installed_info = new
+                return "PRUNED", {**plan, **self.status_details(new)}
             if self.action == "uninstall":
                 if not info:
                     return "NOT_INSTALLED", self.status_details(None)
@@ -839,8 +951,10 @@ class JsonArgumentParser(argparse.ArgumentParser):
 def main(argv=None):
     parser = JsonArgumentParser(description=__doc__)
     parser.add_argument("--app", required=True, choices=APPS)
-    parser.add_argument("action", choices=("check", "check-update", "install", "update", "status", "uninstall"))
+    parser.add_argument("action", choices=("check", "check-update", "install", "update", "status", "uninstall", "cleanup-plan", "prune"))
     parser.add_argument("--version")
+    parser.add_argument("--yes", action="store_true", help="Confirm removal of installer-owned old program versions")
+    parser.add_argument("--expected-plan", help="Refuse cleanup if ownership changed since preview")
     try:
         args = parser.parse_args(argv)
     except Failure as exc:
@@ -848,7 +962,7 @@ def main(argv=None):
                           "type": "result", "success": False, "code": exc.code,
                           "version": None, "revision": None, "details": exc.details}), flush=True)
         return 2
-    installer = Installer(args.app, args.action, args.version)
+    installer = Installer(args.app, args.action, args.version, confirmed=args.yes, expected_plan=args.expected_plan)
     if args.version and not SEMVER.fullmatch(args.version):
         installer.event("result", "INVALID_VERSION", success=False, message="Version must be a semantic x.y.z version")
         return 2

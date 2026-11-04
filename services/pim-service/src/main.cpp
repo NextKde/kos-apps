@@ -1,4 +1,5 @@
 #include "PimStore.h"
+#include <QFileInfo>
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -102,6 +103,16 @@ int main(int argc, char *argv[])
         qCritical() << "PIM storage is already in use or cannot be locked:" << storageDirectory
                     << storageLock.error();
         return 1;
+    }
+    // Do not open a partial profile left by the retired development copier.
+    for (const auto *name : {"migration-pending.json", "migration-finalize.json"}) {
+        const QFileInfo marker(QDir(storageDirectory).filePath(QString::fromLatin1(name)));
+        if (marker.exists() || marker.isSymLink()) {
+            qCritical() << "Unfinished development profile migration:" << marker.absoluteFilePath()
+                        << "Preserve the source, backups and journals for manual recovery."
+                        << "See the compatibility guide; do not delete markers to bypass this guard.";
+            return 1;
+        }
     }
     PimStore store(storageDirectory);
     if (!bus.registerObject(QStringLiteral("/Pim"), &store,

@@ -92,6 +92,7 @@ private:
     void sendRequest(const QString &operation, const QVariantMap &payload = {});
     void flushRequests();
     void applyWeather(const QJsonObject &weather);
+    void publishWidgetSnapshot(const QJsonObject &weather);
     void reloadSnapshot();
     void ensureSnapshotWatch();
     void setTransportError(const QString &message);

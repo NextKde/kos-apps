@@ -1139,8 +1139,23 @@ void PimStore::writeWidgetSnapshot()
             break;
     }
 
+    // Keep the old schema readable, but bind new consumers to this profile.
+#ifdef KOS_PIM_SANDBOX
+    const QString channel = QStringLiteral("flatpak");
+    const QString storageMode = QStringLiteral("default");
+#else
+    const QString channel = QStringLiteral("native");
+    const QString storageMode = qEnvironmentVariableIsEmpty("KOS_PIM_STORAGE_DIR")
+        ? QStringLiteral("default") : QStringLiteral("custom");
+#endif
     const QJsonObject widgetSnapshot{
         {QStringLiteral("schemaVersion"), 1},
+        {QStringLiteral("widgetContractVersion"), 2},
+        {QStringLiteral("appId"), QStringLiteral("org.nextks.calendar")},
+        {QStringLiteral("channel"), channel},
+        {QStringLiteral("storageMode"), storageMode},
+        {QStringLiteral("storagePath"), QDir(d->storageDirectory).absolutePath()},
+        {QStringLiteral("timeZone"), QString::fromUtf8(QTimeZone::systemTimeZoneId())},
         {QStringLiteral("revision"), static_cast<double>(d->revision)},
         {QStringLiteral("generatedAt"), static_cast<double>(
              QDateTime::currentMSecsSinceEpoch())},

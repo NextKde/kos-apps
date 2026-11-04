@@ -13,7 +13,10 @@ Calendar history is the base. Merge `354f1a2aaf6e710e7986faba4f7a7531a4a5d8e8`
 retains Calculator and Weather commit ancestry using an explicit history-only
 ours merge; the subsequent consolidation commit imports their selected source
 files into the mappings below. The merge alone is not a source content merge.
-Old repositories and Releases remain retained; they are not active second copies.
+The original repository URLs above are historical provenance, not active download
+endpoints. Those temporary repositories are being retired with maintainer approval;
+their full refs and Release metadata/assets are backed up before deletion. Their
+commit ancestry remains part of this repository.
 
 ## Path mapping and shared sources
 
@@ -48,10 +51,11 @@ Packaging uses three pinned per-app manifests, one parameterized bundle helper,
 app-prefixed Release attachments, retained Sources/build/license materials and
 manual build/artifact workflows. The generic source installer selects one app
 and recognizes only fixed retired ownership IDs for offline compatibility.
-Historical automated test sources are retained as provenance only, are not
-updated or executed for this consolidation, and may still assume old paths/IDs.
-The build defaults to BUILD_TESTING=OFF. Current build/release readiness is
-recorded in packaging/FLATPAK-READINESS.md, not inferred from historical records.
+Automated regression coverage is being updated for the consolidated identities,
+selective builds and installer lifecycle. CI enables BUILD_TESTING; developer
+builds still default to BUILD_TESTING=OFF. Current build/release readiness and
+actual validation results are recorded in packaging/FLATPAK-READINESS.md,
+not inferred from historical records.
 
 No private keys, credentials, real profiles or machine configuration are source
 inputs. No remote repository creation, package signing or release publication is

@@ -25,10 +25,12 @@ name, shell command or installation root is accepted from a store entry.
 The first three apps use one VERSION/commit/Release but separate packages, source
 manifests and `-DKOS_APPS=<app>` builds. Old `org.nextkde.Calendar`,
 `org.nextkde.Calculator` and `org.nextkde.Weather` Flatpaks are distinct retired
-refs: Settings reports RETIRED_FLATPAK_ID and requires external exact-ref management.
-No automatic uninstall or private-data migration occurs. Old repositories remain
-retained; the new remote and signed release are not yet published. Old installer-owned
-source IDs/desktop links remain strictly recognized for offline status/uninstall.
+refs: Settings reports RETIRED_FLATPAK_ID. No cross-identity profile copying is provided; exact user-ref
+removal is a separate confirmed action that keeps data and does not install a replacement. See
+[compatibility and manual transition](ProfileMigration.md) and [human acceptance](ProfileMigrationAcceptance.md).
+The old per-app repositories are being retired in favor of NextKde/kos-apps;
+no renamed signed release is available yet. Old installer-owned source IDs/desktop
+links remain strictly recognized for offline status/uninstall.
 
 ## Command interface
 
@@ -144,7 +146,7 @@ sandboxed. Never install untrusted source by editing the allowlist.
 CMake's installation prefix is the final immutable version path, not a renamed
 staging path. Before publication the old `current` remains untouched. Build,
 configure and install failures clean the candidate and preserve the old version.
-Success retains prior versions until uninstall. Cancellation terminates the
+Success retains prior versions until explicit prune or uninstall. Cancellation terminates the
 entire child process group (TERM then KILL); the configured child deadline is
 30 minutes per configure/build/install command. Direct SIGKILL or a forced
 installer crash can bypass cleanup and leave a child build process running.
@@ -171,8 +173,9 @@ Corrupt journals, replaced activation paths, or missing ownership metadata/curre
 links without a valid journal are refused. This intentionally favors retaining
 files over guessing ownership. Do not remove or rewrite metadata to force an
 operation. Multi-file uninstall is resumable, not instantaneously atomic; disk
-failure or external file replacement can still require manual recovery. No
-stale-version garbage collection is performed.
+failure or external file replacement can still require manual recovery. No automatic
+stale-version garbage collection is performed; explicit cleanup-plan/prune keeps current
+and one rollback revision (see the compatibility guide).
 
 ## Manual verification
 

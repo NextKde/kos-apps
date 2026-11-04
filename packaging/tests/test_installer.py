@@ -51,7 +51,7 @@ class FixtureClient(app.GitHubClient):
         super().validate_url(url)
         if url.endswith("/releases/latest"):
             route = "/release"
-        elif url.endswith("/app-release.json"):
+        elif url.endswith(".app-release.json"):
             route = "/manifest"
         else:
             route = "/archive"
@@ -114,18 +114,20 @@ if "-S" in args:
     if os.environ.get("FIXTURE_CONFIGURE_FAIL"): sys.exit(11)
     build=pathlib.Path(args[args.index("-B")+1]); build.mkdir(parents=True)
     prefix=next(a.split("=",1)[1] for a in args if a.startswith("-DCMAKE_INSTALL_PREFIX="))
-    (build/"fixture.json").write_text(json.dumps({{"prefix":prefix}}))
+    selected=next(a.split("=",1)[1] for a in args if a.startswith("-DKOS_APPS="))
+    (build/"fixture.json").write_text(json.dumps({{"prefix":prefix,"app":selected}}))
 elif "--build" in args:
     if os.environ.get("FIXTURE_BUILD_FAIL"): sys.exit(12)
 elif "--install" in args:
-    prefix=pathlib.Path(json.loads((pathlib.Path(args[1])/"fixture.json").read_text())["prefix"])
+    config=json.loads((pathlib.Path(args[1])/"fixture.json").read_text())
+    prefix=pathlib.Path(config["prefix"]); selected=config["app"]
     (prefix/"bin").mkdir(parents=True, exist_ok=True)
     (prefix/"share/applications").mkdir(parents=True, exist_ok=True)
-    for name in ("kos-calendar","kos-todo"):
-        binary=prefix/"bin"/name; binary.write_text("#!/bin/sh\\nexit 0\\n"); binary.chmod(0o755)
-        (prefix/"share/applications"/(name+".desktop")).write_text("[Desktop Entry]\\nType=Application\\nExec="+str(binary)+"\\n")
-    (prefix/"share/dbus-1/services").mkdir(parents=True)
-    (prefix/"share/dbus-1/services/org.nextkde.Kos.Pim1.service").write_text("[D-BUS Service]\\nName=org.nextkde.Kos.Pim1\\nExec="+str(prefix/"bin/kos-calendar")+"\\n")
+    binary=prefix/"bin"/("kos-"+selected); binary.write_text("#!/bin/sh\\nexit 0\\n"); binary.chmod(0o755)
+    (prefix/"share/applications"/("org.nextks."+selected+".desktop")).write_text("[Desktop Entry]\\nType=Application\\nExec="+str(binary)+"\\n")
+    if selected=="calendar":
+        (prefix/"share/dbus-1/services").mkdir(parents=True)
+        (prefix/"share/dbus-1/services/org.nextkde.Kos.Pim1.service").write_text("[D-BUS Service]\\nName=org.nextkde.Kos.Pim1\\nExec="+str(binary)+"\\n")
 '''.format(python=os.sys.executable)
         (self.tools / "cmake").write_text(script)
         (self.tools / "cmake").chmod(0o755)
@@ -135,25 +137,29 @@ elif "--install" in args:
 
     def publish(self, version="1.2.3", revision=REV):
         self.archive = archive_bytes()
-        self.manifest = {"schemaVersion": 1, "appId": "org.nextkde.Calendar", "version": version,
+        key = getattr(self, "key", "calendar")
+        self.app_id = "org.nextks." + key
+        self.manifest = {"schemaVersion": 1, "appId": self.app_id, "version": version,
                          "revision": revision, "archiveSha256": hashlib.sha256(self.archive).hexdigest()}
+        asset = self.app_id + ".app-release.json"
         self.release = {"draft": False, "prerelease": False, "tag_name": "v" + version,
-                        "assets": [{"name": "app-release.json", "browser_download_url":
-                            "https://github.com/NextKde/kos-calendar/releases/download/v" + version + "/app-release.json"}]}
+                        "assets": [{"name": asset, "browser_download_url":
+                            "https://github.com/NextKde/kos-apps/releases/download/v" + version + "/" + asset}]}
         self.sync()
 
     def sync(self):
         type(self).responses = {"/release": (200, json.dumps(self.release).encode(), {}),
             "/manifest": (200, json.dumps(self.manifest).encode(), {}), "/archive": (200, self.archive, {})}
 
-    def invoke(self, action, requested=None):
+    def invoke(self, action, requested=None, **options):
         events = []
-        engine = app.Installer("calendar", action, requested, client=FixtureClient("kos-calendar", self.base), emit=events.append)
+        engine = app.Installer(getattr(self, "key", "calendar"), action, requested,
+            client=FixtureClient("kos-apps", self.base), emit=events.append, **options)
         exit_code = engine.run()
         results = [event for event in events if event["type"] == "result"]
         self.assertEqual(len(results), 1, events)
         self.assertEqual(results[0]["schemaVersion"], 1)
-        self.assertEqual(results[0]["appId"], "org.nextkde.Calendar")
+        self.assertEqual(results[0]["appId"], self.app_id)
         return exit_code, results[0], engine
 
     def installed(self):
@@ -204,10 +210,10 @@ elif "--install" in args:
         self.assertEqual(type(self).requests.count("/release"), 3)
 
     def test_tls_error_not_retried(self):
-        client = app.GitHubClient("kos-calendar")
+        client = app.GitHubClient("kos-apps")
         with mock.patch.object(client.opener, "open", side_effect=urllib.error.URLError(ssl.SSLError("bad cert"))) as request:
             with self.assertRaises(app.Failure) as failure:
-                client.fetch("https://api.github.com/repos/NextKde/kos-calendar/releases/latest")
+                client.fetch("https://api.github.com/repos/NextKde/kos-apps/releases/latest")
             self.assertEqual(failure.exception.code, "TLS_ERROR")
             self.assertEqual(request.call_count, 1)
 
@@ -229,10 +235,10 @@ elif "--install" in args:
                 self.assertEqual(self.invoke("check-update")[1]["code"], "INVALID_RELEASE")
 
     def test_urls_reject_external_redirects(self):
-        client = app.GitHubClient("kos-calendar")
-        for url in ("http://github.com/NextKde/kos-calendar/x", "https://evil.com/x",
-                    "https://github.com/Other/kos-calendar/x", "https://github.com/NextKde/kos-calendar-evil/x",
-                    "https://github.com:444/NextKde/kos-calendar/x"):
+        client = app.GitHubClient("kos-apps")
+        for url in ("http://github.com/NextKde/kos-apps/x", "https://evil.com/x",
+                    "https://github.com/Other/kos-calendar/x", "https://github.com/NextKde/kos-apps-evil/x",
+                    "https://github.com:444/NextKde/kos-apps/x"):
             with self.subTest(url=url), self.assertRaises(app.Failure):
                 client.validate_url(url, redirected=True)
         with self.assertRaises(app.Failure):
@@ -358,7 +364,7 @@ elif "--install" in args:
 
     def test_replaced_link_refuses_uninstall(self):
         engine = self.installed()
-        desktop = self.home / "data/applications/kos-calendar.desktop"
+        desktop = self.home / "data/applications/org.nextks.calendar.desktop"
         desktop.unlink(); desktop.write_text("external")
         self.assertEqual(self.invoke("uninstall")[1]["code"], "CORRUPT_STATE")
         self.assertTrue(engine.current.exists())
@@ -399,12 +405,12 @@ elif "--install" in args:
 
     def test_download_absolute_deadline_bounded(self):
         class SlowResponse:
-            url = "https://api.github.com/repos/NextKde/kos-calendar/releases/latest"
+            url = "https://api.github.com/repos/NextKde/kos-apps/releases/latest"
             headers = {}
             def __enter__(self): return self
             def __exit__(self, *args): pass
             def read(self, count): return b"x"
-        client = app.GitHubClient("kos-calendar")
+        client = app.GitHubClient("kos-apps")
         with mock.patch.object(client.opener, "open", return_value=SlowResponse()) as request, \
              mock.patch.object(app.time, "monotonic", side_effect=[0, 0, 46, 100, 100, 146, 200, 200, 246]), \
              mock.patch.object(app.time, "sleep"):
@@ -537,7 +543,7 @@ elif "--install" in args:
         self.assertTrue(engine.current.exists())
 
     def test_network_deadline_interrupts_open_headers(self):
-        client = app.GitHubClient("kos-calendar")
+        client = app.GitHubClient("kos-apps")
         old = app.network_deadline
         def short_deadline(seconds): return old(0.02)
         def stalled(*args, **kwargs):
@@ -547,7 +553,7 @@ elif "--install" in args:
              mock.patch.object(client.opener, "open", side_effect=stalled) as request, \
              mock.patch.object(app.time, "sleep", wraps=time.sleep):
             with self.assertRaises(app.Failure) as failure:
-                client.fetch("https://api.github.com/repos/NextKde/kos-calendar/releases/latest")
+                client.fetch("https://api.github.com/repos/NextKde/kos-apps/releases/latest")
         self.assertEqual(failure.exception.code, "NETWORK_TIMEOUT")
         self.assertEqual(request.call_count, 3)
 
@@ -603,6 +609,77 @@ elif "--install" in args:
             self.assertEqual(engine.run(), 2)
         self.assertEqual(events[-1]["code"], "NETWORK_TIMEOUT")
         self.assertEqual(len([event for event in events if event["type"] == "result"]), 1)
+
+    def test_each_selected_app_lifecycle_and_scoped_activation(self):
+        for key in app.APPS:
+            with self.subTest(app=key):
+                self.key = key
+                self.publish()
+                engine = self.installed()
+                desktop = self.home / "data/applications" / (self.app_id + ".desktop")
+                self.assertTrue(desktop.is_symlink())
+                self.assertFalse((engine.current / "bin/kos-todo").exists())
+                self.assertEqual(sorted(path.name for path in (engine.current / "bin").iterdir()),
+                                 ["kos-" + key])
+                self.publish("1.2.4", REV2)
+                self.assertEqual(self.invoke("update")[1]["code"], "INSTALLED")
+                self.assertEqual(self.invoke("status")[1]["details"]["currentVersion"], "1.2.4")
+                self.assertEqual(self.invoke("uninstall")[1]["code"], "UNINSTALLED")
+                self.assertFalse(desktop.is_symlink())
+        self.key = "calendar"
+
+    def test_cleanup_plan_and_confirmed_prune_preserve_two_versions_and_data(self):
+        engine = self.installed()
+        for version, revision in (("1.2.4", REV2), ("1.2.5", "c" * 40)):
+            self.publish(version, revision)
+            self.assertEqual(self.invoke("update")[1]["code"], "INSTALLED")
+        personal = self.home / "data/kos/pim/events.ics"
+        personal.parent.mkdir(parents=True)
+        personal.write_text("keep personal data")
+        type(self).responses = {}
+        type(self).requests.clear()
+        plan = self.invoke("cleanup-plan")[1]["details"]
+        self.assertEqual(plan["removedRevisions"], [REV])
+        self.assertEqual(plan["keptRevisions"], [REV2, "c" * 40])
+        self.assertEqual(self.invoke("prune")[1]["code"], "CONFIRMATION_REQUIRED")
+        self.assertEqual(self.invoke("prune", confirmed=True, expected_plan="wrong")[1]["code"], "PLAN_CHANGED")
+        self.assertEqual(self.invoke("prune", confirmed=True, expected_plan=plan["planToken"])[1]["code"], "PRUNED")
+        self.assertFalse((engine.root / "versions" / REV).exists())
+        self.assertTrue((engine.root / "versions" / REV2).is_dir())
+        self.assertEqual(engine.current.resolve().name, "c" * 40)
+        self.assertEqual(personal.read_text(), "keep personal data")
+        self.assertEqual(type(self).requests, [])
+
+    def test_legacy_calendar_owned_links_are_removed_on_upgrade_without_todo(self):
+        engine = self.installed()
+        info = json.loads(engine.metadata.read_text())
+        old_desktop = engine.current / "share/applications/kos-calendar.desktop"
+        old_desktop.write_text((engine.current / "share/applications/org.nextks.calendar.desktop").read_text())
+        new_link = self.home / "data/applications/org.nextks.calendar.desktop"
+        new_link.unlink()
+        del info["links"][str(new_link)]
+        legacy_desktop = self.home / "data/applications/kos-calendar.desktop"
+        legacy_desktop.symlink_to(old_desktop)
+        info["appId"] = "org.nextkde.Calendar"
+        info["links"][str(legacy_desktop)] = str(old_desktop)
+        for path, target in engine.legacy_links().items():
+            destination = Path(target)
+            destination.write_text("legacy")
+            Path(path).symlink_to(target)
+            info["links"][path] = target
+        app.write_json(engine.metadata, info)
+        self.publish("1.2.4", REV2)
+        self.assertEqual(self.invoke("update")[1]["code"], "INSTALLED")
+        self.assertTrue(new_link.is_symlink())
+        self.assertFalse(legacy_desktop.is_symlink())
+        for path in engine.legacy_links():
+            self.assertFalse(Path(path).is_symlink())
+        self.assertEqual(json.loads(engine.metadata.read_text())["appId"], "org.nextks.calendar")
+
+    def test_other_app_release_manifest_cannot_satisfy_selected_app(self):
+        self.release["assets"][0]["name"] = "org.nextks.weather.app-release.json"
+        self.sync()
+        self.assertEqual(self.invoke("check-update")[1]["code"], "RELEASE_UNAVAILABLE")
 
     def test_lock_busy(self):
         engine = app.Installer("calendar", "status")

@@ -12,6 +12,7 @@
 #include <QLocale>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QSaveFile>
 #include <QStringList>
 
 #include <utility>
@@ -590,6 +591,7 @@ void WeatherClient::applyWeather(const QJsonObject &weather)
     m_airQuality = weather.value(QStringLiteral("airQuality")).toObject().toVariantMap();
     m_fetchedAt = weather.value(QStringLiteral("fetchedAt")).toInteger();
     m_staleAt = weather.value(QStringLiteral("staleAt")).toInteger();
+    publishWidgetSnapshot(weather);
     m_loading = m_status == QLatin1String("loading");
     m_ready = !m_current.isEmpty();
     if (m_ready || m_status == QLatin1String("error")) {
@@ -599,6 +601,49 @@ void WeatherClient::applyWeather(const QJsonObject &weather)
             m_requestedLocation.clear();
     }
     emit snapshotChanged();
+}
+
+void WeatherClient::publishWidgetSnapshot(const QJsonObject &weather)
+{
+    // Do not republish a host override as the standalone app's private data.
+    if (m_coreBackend || m_snapshotDirectory.isEmpty())
+        return;
+    const QString path = QDir(m_snapshotDirectory).filePath(QStringLiteral("widget-snapshot.json"));
+    if (!QDir().mkpath(m_snapshotDirectory))
+        return;
+#ifdef KOS_WEATHER_SANDBOX
+    const QString channel = QStringLiteral("flatpak");
+#else
+    const QString channel = QStringLiteral("native");
+#endif
+    QJsonObject summary;
+    for (const auto *field : {"schemaVersion", "location", "locations", "current", "hourly",
+                              "daily", "airQuality", "units", "status", "error", "fetchedAt",
+                              "staleAt", "nextRefreshAt"}) {
+        const QString name = QString::fromLatin1(field);
+        summary.insert(name, weather.value(name));
+    }
+    const QJsonObject payload{
+        {QStringLiteral("widgetContractVersion"), 2},
+        {QStringLiteral("appId"), QStringLiteral("org.nextks.weather")},
+        {QStringLiteral("channel"), channel},
+        {QStringLiteral("storageMode"), QStringLiteral("default")},
+        {QStringLiteral("generatedAt"), QDateTime::currentMSecsSinceEpoch()},
+        {QStringLiteral("weather"), summary},
+    };
+    const QByteArray bytes = QJsonDocument(payload).toJson(QJsonDocument::Compact);
+    if (bytes.size() > 512 * 1024) {
+        qWarning() << "Weather widget summary exceeds its size limit";
+        return;
+    }
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Unable to publish Weather widget summary:" << file.errorString();
+        return;
+    }
+    file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    if (file.write(bytes) != bytes.size() || !file.commit())
+        qWarning() << "Unable to commit Weather widget summary:" << file.errorString();
 }
 
 void WeatherClient::ensureSnapshotWatch()

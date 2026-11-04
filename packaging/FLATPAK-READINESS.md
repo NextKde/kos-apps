@@ -23,8 +23,12 @@ was signed; runtime trust provisioning remains incomplete.
 Calendar retains scoped sandbox PIM/private storage, pre-store ownership locking
 and Background portal request/refusal/partial/timeout handling. Portal, closing,
 relogin, reminder activation and notifications need manual acceptance. The lock
-cannot protect against old non-cooperating native writers. Full-profile migration
-and a host-widget bridge are not implemented; iCalendar import is not equivalent.
+cannot protect against old non-cooperating native writers. The unpublished
+host profile copier and first-launch finalizer have been withdrawn. Existing ICS
+exchange does not package metadata/images or hand over reminders; sandbox file
+access is not yet accepted. Unfinished development markers block opening a partial
+profile. Identity-bound read-only widget summaries are implemented locally; new-ID sandbox access, source selection, stale/error display and exact app navigation still need manual acceptance. No host filesystem permission was added. See WidgetIntegration.md, ProfileMigration.md and
+ProfileMigrationAcceptance.md for compatibility limits and pending manual checks.
 Weather backend lifecycle, source/update/uninstall behavior, identity conflicts,
 network failures and cancellation likewise need manual acceptance with disposable
 profiles. Normal removal preserves data/shared runtimes and never migrates or

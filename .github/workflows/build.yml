@@ -1,5 +1,7 @@
-name: Compile selected application
+name: Build and test applications
 on:
+  push:
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,10 +20,25 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ python3 golang-go qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-l10n-tools libkf6calendarcore-dev
-      - name: Compile and stage selected application (no tests or app launch)
+      - name: Test isolated source installer
+        if: matrix.app == 'calculator'
+        run: python3 -m unittest discover -s packaging/tests -v
+      - name: Compile and stage selected application
         env:
           APP: ${{ matrix.app }}
         run: |
-          cmake -S . -B tmp/build -G Ninja -DKOS_APPS="$APP" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/stage"
+          cmake -S . -B tmp/build -G Ninja -DKOS_APPS="$APP" -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/stage"
           cmake --build tmp/build --parallel 2
           cmake --install tmp/build
+      - name: Run application regressions
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_FORCE_STDERR_LOGGING: '1'
+        run: ctest --test-dir tmp/build --output-on-failure
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-${{ matrix.app }}
+          path: |
+            tmp/build/Testing/Temporary/
+          if-no-files-found: ignore

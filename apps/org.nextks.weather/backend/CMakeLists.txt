@@ -13,3 +13,10 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kos-weather-backend
     VERBATIM)
 add_custom_target(kos-weather-backend-build ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kos-weather-backend)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kos-weather-backend DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(BUILD_TESTING)
+    add_test(NAME kos-weather.backend
+        COMMAND ${CMAKE_COMMAND} -E env GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off
+            ${GO_EXECUTABLE} test -mod=readonly ./...)
+    set_tests_properties(kos-weather.backend PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} LABELS data TIMEOUT 60)
+endif()
