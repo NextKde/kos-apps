@@ -5,11 +5,12 @@ endif()
 find_package(Qt6 6.5 REQUIRED COMPONENTS QuickDialogs2)
 
 kos_add_application(kos-calendar
+    APP_ID org.nextks.calendar
     URI Kos.Apps.Calendar
     DISPLAY_NAME "KOS Calendar"
     DESKTOP_FILE ${CMAKE_CURRENT_SOURCE_DIR}/data/kos-calendar.desktop.in
     ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/data/kos-calendar.svg
-    METAINFO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/data/org.nextkde.Kos.Calendar.metainfo.xml
+    METAINFO_FILE ${PROJECT_SOURCE_DIR}/packaging/flatpak/org.nextks.calendar.metainfo.xml.in
     SOURCES
         src/main.cpp
     QML_FILES

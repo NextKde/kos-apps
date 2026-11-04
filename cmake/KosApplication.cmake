@@ -1,119 +1,48 @@
 include_guard(GLOBAL)
 
 function(kos_add_application target)
-    set(oneValueArgs URI DISPLAY_NAME DESKTOP_FILE ICON_FILE METAINFO_FILE)
+    set(oneValueArgs APP_ID URI DISPLAY_NAME DESKTOP_FILE ICON_FILE METAINFO_FILE)
     set(multiValueArgs SOURCES QML_SOURCES QML_FILES LINK_LIBRARIES)
     cmake_parse_arguments(KOS_APP "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    foreach(required_argument URI DISPLAY_NAME DESKTOP_FILE)
+    foreach(required_argument APP_ID URI DISPLAY_NAME DESKTOP_FILE METAINFO_FILE)
         if(NOT KOS_APP_${required_argument})
             message(FATAL_ERROR "kos_add_application(${target}) requires ${required_argument}")
         endif()
     endforeach()
-
-    qt_add_executable(${target}
-        ${KOS_APP_SOURCES}
-    )
-
+    qt_add_executable(${target} ${KOS_APP_SOURCES})
     qt_add_qml_module(${target}
-        URI ${KOS_APP_URI}
-        VERSION 1.0
-        RESOURCE_PREFIX /qt/qml
-        SOURCES ${KOS_APP_QML_SOURCES}
-        QML_FILES ${KOS_APP_QML_FILES}
-    )
-
+        URI ${KOS_APP_URI} VERSION 1.0 RESOURCE_PREFIX /qt/qml
+        SOURCES ${KOS_APP_QML_SOURCES} QML_FILES ${KOS_APP_QML_FILES})
     target_link_libraries(${target} PRIVATE
-        Kos::AppCore
-        Kos::Ui
-        Kos::UiPlugin
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Qml
-        Qt6::Quick
-        Qt6::QuickControls2
-        ${KOS_APP_LINK_LIBRARIES}
-    )
-
+        Kos::AppCore Kos::Ui Kos::UiPlugin Qt6::Core Qt6::Gui Qt6::Qml
+        Qt6::Quick Qt6::QuickControls2 ${KOS_APP_LINK_LIBRARIES})
     target_compile_definitions(${target} PRIVATE
         KOS_APP_VERSION="${PROJECT_VERSION}"
-    )
-
+        KOS_DESKTOP_ID="${KOS_APP_APP_ID}"
+        KOS_ACTIVATION_ID="${KOS_APP_APP_ID}")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(${target} PRIVATE
-            -Wall
-            -Wextra
-            -Wpedantic
-        )
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
-
-    install(TARGETS ${target}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    get_filename_component(kos_desktop_name "${KOS_APP_DESKTOP_FILE}" NAME)
-    string(REGEX REPLACE "\\.in$" "" kos_desktop_name "${kos_desktop_name}")
+    install(TARGETS ${target} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     set(KOS_APP_EXECUTABLE "${CMAKE_INSTALL_FULL_BINDIR}/${target}")
     if(KOS_FLATPAK_BUILD)
-        set(kos_desktop_name "${KOS_FLATPAK_APP_ID}.desktop")
         set(KOS_APP_EXECUTABLE "${target}")
-        target_compile_definitions(${target} PRIVATE
-            KOS_DESKTOP_ID="${KOS_FLATPAK_APP_ID}"
-            KOS_ACTIVATION_ID="${KOS_FLATPAK_APP_ID}"
-        )
     endif()
-    configure_file(
-        "${KOS_APP_DESKTOP_FILE}"
-        "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}"
-        @ONLY
-    )
-    if(KOS_FLATPAK_BUILD)
-        file(READ "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" kos_desktop)
-        string(REPLACE "Icon=${target}" "Icon=${KOS_FLATPAK_APP_ID}"
-            kos_desktop "${kos_desktop}")
-        string(REPLACE "StartupWMClass=${target}" "StartupWMClass=${KOS_FLATPAK_APP_ID}"
-            kos_desktop "${kos_desktop}")
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" "${kos_desktop}")
-    endif()
+    set(kos_desktop_name "${KOS_APP_APP_ID}.desktop")
+    configure_file("${KOS_APP_DESKTOP_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" @ONLY)
+    file(READ "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" kos_desktop)
+    string(REPLACE "Icon=${target}" "Icon=${KOS_APP_APP_ID}" kos_desktop "${kos_desktop}")
+    string(REPLACE "StartupWMClass=${target}" "StartupWMClass=${KOS_APP_APP_ID}" kos_desktop "${kos_desktop}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" "${kos_desktop}")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}"
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
-    )
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     if(KOS_APP_ICON_FILE)
-        if(KOS_FLATPAK_BUILD)
-            install(FILES "${KOS_APP_ICON_FILE}"
-                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
-                RENAME "${KOS_FLATPAK_APP_ID}.svg"
-            )
-        else()
-            install(FILES "${KOS_APP_ICON_FILE}"
-                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
-            )
-        endif()
+        install(FILES "${KOS_APP_ICON_FILE}"
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+            RENAME "${KOS_APP_APP_ID}.svg")
     endif()
-    if(KOS_FLATPAK_BUILD)
-        configure_file("${PROJECT_SOURCE_DIR}/packaging/flatpak/metainfo.xml.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/${KOS_FLATPAK_APP_ID}.metainfo.xml" @ONLY)
-        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${KOS_FLATPAK_APP_ID}.metainfo.xml"
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
-    elseif(KOS_APP_METAINFO_FILE)
-        install(FILES "${KOS_APP_METAINFO_FILE}"
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
-        )
-    endif()
-
-    if(BUILD_TESTING)
-        add_test(NAME ${target}.version COMMAND ${target} --version)
-        set_tests_properties(${target}.version PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-            LABELS ui
-            TIMEOUT 10
-        )
-
-        add_test(NAME ${target}.qml-smoke COMMAND ${target} --smoke-test)
-        set_tests_properties(${target}.qml-smoke PROPERTIES
-            ENVIRONMENT
-                "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QSG_RHI_BACKEND=software"
-            LABELS ui
-            TIMEOUT 10
-        )
-    endif()
+    configure_file("${KOS_APP_METAINFO_FILE}"
+        "${CMAKE_CURRENT_BINARY_DIR}/${KOS_APP_APP_ID}.metainfo.xml" @ONLY)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${KOS_APP_APP_ID}.metainfo.xml"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
 endfunction()

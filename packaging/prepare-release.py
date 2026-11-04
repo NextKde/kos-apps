@@ -11,9 +11,9 @@ import urllib.parse
 import urllib.request
 
 APPS = {
-    "calendar": ("kos-calendar", "org.nextkde.Calendar"),
-    "calculator": ("kos-calculator", "org.nextkde.Calculator"),
-    "weather": ("kos-weather", "org.nextkde.Weather"),
+    "calendar": ("kos-apps", "org.nextks.calendar"),
+    "calculator": ("kos-apps", "org.nextks.calculator"),
+    "weather": ("kos-apps", "org.nextks.weather"),
     "listenfree": ("ListenFree", "org.nextkde.ListenFree"),
 }
 MAXIMUM_ARCHIVE = 256 * 1024 * 1024
@@ -74,7 +74,7 @@ def main(argv=None):
         json.dump(data, stream, indent=2)
         stream.write("\n")
     print(f"Prepared {args.output}; nothing was published.")
-    print(f"Review this manifest and source commit, then attach app-release.json to stable release v{args.version}.")
+    print(f"Review this manifest and source commit for stable release v{args.version}; use the app-ID-prefixed manifest filename.")
     print("The archive hash detects corruption. GitHub repository publication permissions remain the trust boundary.")
     return 0
 

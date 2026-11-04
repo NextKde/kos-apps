@@ -1,88 +1,63 @@
-# KOS Calendar
+# KOS Apps
 
-Standalone Calendar and Reminders for Linux, extracted from [NextKde](https://github.com/NextKde/NextKde). This repository builds without a NextKde checkout, Quickshell, Settings, or KWin plugins. License: GPL-3.0; see `LICENSE` and `SOURCE_PROVENANCE.md`. Application release version: `VERSION`.
+Calendar (including reminders), Calculator and Weather share one independent
+source repository, `NextKde/kos-apps`, and one release version (`VERSION`). They do
+not require a NextKde core checkout, Quickshell or KWin plugins. ListenFree and
+KMusic are separate projects.
 
-Calendar includes day/week/month/year views, events, reminders and iCalendar import/export in one application. Todo is integrated into Calendar; no separate Todo launcher is built or installed. Native builds preserve `kos-calendar.desktop`, preference/data paths, and PIM D-Bus identity `org.nextkde.Kos.Pim1`. The opt-in Flatpak build uses separate `org.nextkde.Calendar` application and `org.nextkde.Calendar.Pim` service identities with private storage; it does not rename or migrate the existing native installation.
+| Application | Source directory / application ID | Executable |
+| --- | --- | --- |
+| Calendar | `apps/org.nextks.calendar` / `org.nextks.calendar` | `kos-calendar` |
+| Calculator | `apps/org.nextks.calculator` / `org.nextks.calculator` | `kos-calculator` |
+| Weather | `apps/org.nextks.weather` / `org.nextks.weather` | `kos-weather` |
 
-## Flatpak bundle preparation
+## Selective build
 
-See [packaging/flatpak/README.md](packaging/flatpak/README.md) for the development manifest, scoped PIM, background reminders, migration limits and artifact-only signing workflow. Native and sandbox-identity host builds compile; a KDE 6.11 SDK build and unsigned development bundle have also been produced. The signed release helper (including source artifacts), official Release and sandbox/manual acceptance remain outstanding. Full-profile migration and shared host widgets are not implemented.
-
-## Dependencies
-
-CMake 3.21+, C++20 compiler, Qt 6.5+ (Core, DBus, Gui, Network, Qml, Quick, QuickControls2, QuickDialogs2, LinguistTools), KDE Frameworks 6 CalendarCore / libical. KF6 WindowSystem is optional (native window effects). QtTest is only required with `BUILD_TESTING=ON`.
-
-Ubuntu 26.04 (24.04's standard Qt 6.4 is too old):
-
-```sh
-sudo apt install build-essential cmake ninja-build python3 pkg-config \
-  qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-tools-dev-tools \
-  qt6-l10n-tools qt6-declarative-dev-tools qt6-qpa-plugins libkf6calendarcore-dev \
-  qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-templates \
-  qml6-module-qtquick-layouts qml6-module-qtquick-window qml6-module-qtquick-dialogs \
-  qml6-module-qtquick-effects qml6-module-qtqml-workerscript qml6-module-qtcore
-```
-
-Arch Linux: `base-devel cmake ninja python qt6-base qt6-declarative qt6-tools kcalendarcore`; optional `kwindowsystem`. A normal Qt Wayland/X11 platform plugin is needed for interactive use. Tests additionally need QtTest/Qt Quick Test and `dbus-run-session` / `dbus-send` (Ubuntu: `qml6-module-qttest dbus`).
-
-## Build and run
+CMake 3.25+, C++20, Ninja and Qt 6.8+ Core/DBus/Gui/Network/Qml/Quick/
+QuickControls2/LinguistTools are required. Calendar additionally needs Qt
+QuickDialogs2 and KF6 CalendarCore/libical; Weather needs Go 1.22+. KF6 WindowSystem
+is optional. A Calculator-only configuration does not require Go or CalendarCore.
 
 ```sh
-cmake -S . -B build -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX="$HOME/.local/share/kos-calendar-dev"
-cmake --build build --parallel 2
-cmake --install build
+cmake -S . -B tmp/build-calculator -G Ninja -DKOS_APPS=calculator \
+  -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/stage-calculator"
+cmake --build tmp/build-calculator --parallel 2
+cmake --install tmp/build-calculator
 ```
 
-For a source-tree development run without changing real data:
+Use `-DKOS_APPS=calendar` or `weather` for a single application, or
+`'-DKOS_APPS=calendar;calculator;weather'` for a combined native build. Installation
+contains only the selected applications and their required helpers. Shared Qt/QML
+components are embedded, not installed over global modules.
 
-```sh
-mkdir -p tmp/dev/config tmp/dev/data tmp/dev/cache
-export XDG_CONFIG_HOME="$PWD/tmp/dev/config" XDG_DATA_HOME="$PWD/tmp/dev/data"
-export XDG_CACHE_HOME="$PWD/tmp/dev/cache" KOS_PIM_STORAGE_DIR="$PWD/tmp/dev/pim"
-dbus-run-session -- sh -c './build/services/pim-service/kos-pim-service & service=$!; trap "kill $service" EXIT; ./build/apps/calendar/kos-calendar'
-```
+## Installation and releases
 
-Use `kos-calendar --help` for entry points, including `--view` and `--item`; `kos-calendar --view reminders` opens integrated tasks. Do not launch a second PIM service on a session already owning `org.nextkde.Kos.Pim1`.
+The intended distribution is three independently installable signed Flatpak bundles
+in one stable `vX.Y.Z` GitHub Release. See [packaging](packaging/flatpak/README.md).
+The new repository has not been created/pushed and no renamed signed release is
+available yet. Existing old-ID development builds do not validate these new IDs.
 
-## Stable user installer
+The explicit developer/source entry point selects exactly one application:
+`./install.sh --app calculator install` (also status/check-update/update/uninstall).
+It consumes the selected app's source manifest, not a replacement installer script.
+No application data is deleted by normal uninstall.
 
-Once the published release includes `packaging/installer.py`:
+## Compatibility and data
 
-```sh
-./install.sh check
-./install.sh check-update
-./install.sh install
-./install.sh update
-./install.sh status
-./install.sh uninstall
-```
+`org.nextkde.Calendar`, `org.nextkde.Calculator` and `org.nextkde.Weather` Flatpaks
+are retired, distinct identities. There is no in-place Flatpak rename, automatic
+uninstall, adoption or migration of their private data. Settings detects them and
+requires explicit external management before installing the new ID.
 
-The wrapper delegates to the universal Python installer with `--app calendar`. It builds the standalone root with `BUILD_TESTING=OFF` into an immutable per-user version prefix. The generic engine owns desktop/activation links and conflict detection, not CMake. User data is not removed on uninstall. Stable `app-release.json` uses schemaVersion 1, appId `org.nextkde.Calendar`, version `0.1.0`, the published repository's 40-hex revision, and archiveSha256; publication supplies the actual revision/hash.
+Native preference/data paths remain unchanged. Native Calendar retains the PIM
+bus `org.nextkde.Kos.Pim1`; sandbox Calendar uses `org.nextks.calendar.Pim` and
+private Flatpak storage, ignoring inherited host storage overrides. Background
+reminders require the desktop Background portal's permission; full profile
+migration and a host-widget bridge are not implemented. Do not run competing
+native PIM writers against the same storage.
 
-## Private runtime and activation
-
-Kos.Ui, Kos.Demo, and Kos.Pim QML/resources are statically embedded in the app; nothing is installed over core Settings or global shared QML. All CMake installation paths stay under the configured prefix. Binaries: `bin/kos-calendar`, `bin/kos-pim-service`. The installer exposes only Calendar on PATH; the PIM executable need not have a public link.
-
-`share/dbus-1/services/org.nextkde.Kos.Pim1.service` defaults to direct D-Bus activation using the configured final prefix. Configure `KOS_PIM_SERVICE_EXECUTABLE` for a different activation executable, or `KOS_INSTALL_PIM_ACTIVATION=OFF` when an existing desktop installation already owns the service. Never overwrite a foreign activation file or running desktop service. `KOS_INSTALL_PIM_SYSTEMD_UNIT=ON` optionally installs a user unit and enables systemd delegation in the private activation file; the default is OFF, so the app never depends on an unmanaged systemd unit. CMake does not enable/start units.
-
-Notification actions find sibling `kos-calendar` first, preserving relocation within a prefix; `KOS_CALENDAR_EXECUTABLE` can explicitly override the launch path. Desktop/D-Bus Exec entries bind the final configured prefix: reconfigure when relocating the installation, rather than moving generated activation files unchanged.
-
-## App-local tests
-
-Optional `BUILD_TESTING=ON` registers shared application preferences/language tests, Calendar version/QML smoke, PIM store/private-bus tests. No unrelated desktop/sibling tests are registered. `.github/workflows/build.yml` compiles and runs these on Ubuntu with private data directories and D-Bus. Local test runs must likewise isolate `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, and `KOS_PIM_STORAGE_DIR` under `tmp/` and use `dbus-run-session`.
-
-## Independent stable releases
-
-A maintainer publishes a reviewed `vX.Y.Z` tag matching `VERSION`. The application
-workflow must build and validate successfully before its release job publishes
-`app-release.json`. The manifest records the exact source commit and source
-archive SHA-256. Settings checks this repository's latest stable GitHub Release
-on **Check for updates**, then offers **Update**; users do not need a new NextKDE
-release. Drafts and prereleases are not offered, and updates are never automatic.
-
-The bundled installer is reviewed code, not a script fetched by a release check.
-Publication permissions on this GitHub repository are the trust boundary; hashes
-protect transfer integrity, not a compromised publisher. Never publish a release
-for an unverified source commit. See `packaging/INSTALLATION.md` for CLI actions,
-network error handling, offline removal, installation ownership and preserved data.
+The three old repositories and historical Releases are retained as provenance,
+not active second copies. See `SOURCE_PROVENANCE.md`, `LICENSE` and retained
+third-party/shader notices. No real profiles, credentials or machine settings
+belong in this repository. Runtime lifecycle, portal and update/uninstall behavior
+remain subject to manual acceptance using disposable profiles.

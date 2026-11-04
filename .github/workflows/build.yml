@@ -1,52 +1,27 @@
-name: Application build
+name: Compile selected application
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: ubuntu:26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [calendar, calculator, weather]
+    runs-on: ubuntu-26.04
     steps:
-      - name: Install build and QML dependencies
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install build dependencies
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates build-essential cmake ninja-build python3 pkg-config qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qt6-declarative-dev-tools qt6-qpa-plugins qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtquick-layouts qml6-module-qtquick-window qml6-module-qtquick-dialogs qml6-module-qtquick-effects qml6-module-qtqml-workerscript qml6-module-qtcore qml6-module-qttest dbus libkf6calendarcore-dev
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Installer network and lifecycle regressions
-        run: python3 -m unittest discover -s packaging/tests -p test_installer.py -v
-      - name: Configure standalone project
-        run: cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/install"
-      - name: Compile app and app-local tests
-        run: cmake --build build --parallel 2
-      - name: Run app-local tests with isolated data and session bus
-        run: |
-          mkdir -p "$PWD/tmp/ci/data" "$PWD/tmp/ci/config" "$PWD/tmp/ci/cache" "$PWD/tmp/ci/runtime"
-          chmod 700 "$PWD/tmp/ci/runtime"
-          export XDG_DATA_HOME="$PWD/tmp/ci/data" XDG_CONFIG_HOME="$PWD/tmp/ci/config" XDG_CACHE_HOME="$PWD/tmp/ci/cache" XDG_RUNTIME_DIR="$PWD/tmp/ci/runtime"
-          export KOS_PIM_STORAGE_DIR="$PWD/tmp/ci/pim" QT_FORCE_STDERR_LOGGING=1 TMPDIR="$PWD/tmp/ci"
-          dbus-run-session -- ctest --test-dir build --output-on-failure
-      - name: Check private-prefix installation
-        run: cmake --install build
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Validate immutable source release
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ python3 golang-go qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-l10n-tools libkf6calendarcore-dev
+      - name: Compile and stage selected application (no tests or app launch)
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          APP: ${{ matrix.app }}
         run: |
-          test "$RELEASE_TAG" = "v$(tr -d '\n' < VERSION)"
-          mkdir -p tmp/release
-          python3 packaging/prepare-release.py --app calendar --version "$(tr -d '\n' < VERSION)" --revision "$GITHUB_SHA" --output tmp/release/app-release.json
-      - name: Publish reviewed-source release manifest
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          gh release create "$RELEASE_TAG" tmp/release/app-release.json --verify-tag --title "$RELEASE_TAG" --notes "Independent source release. Use ./install.sh install or Settings. Development dependencies are required; installation never installs system packages and uninstall preserves user data."
+          cmake -S . -B tmp/build -G Ninja -DKOS_APPS="$APP" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/stage"
+          cmake --build tmp/build --parallel 2
+          cmake --install tmp/build

@@ -26,12 +26,12 @@ target_compile_definitions(kos-pim-service PRIVATE
 if(KOS_FLATPAK_BUILD)
     target_compile_definitions(kos_pim_service_core PRIVATE
         KOS_PIM_SANDBOX=1
-        KOS_CALENDAR_DESKTOP_ID="${KOS_FLATPAK_APP_ID}"
-        KOS_CALENDAR_ACTIVATION_ID="${KOS_FLATPAK_APP_ID}")
+        KOS_CALENDAR_DESKTOP_ID="org.nextks.calendar"
+        KOS_CALENDAR_ACTIVATION_ID="org.nextks.calendar")
 else()
     target_compile_definitions(kos_pim_service_core PRIVATE
-        KOS_CALENDAR_DESKTOP_ID="kos-calendar"
-        KOS_CALENDAR_ACTIVATION_ID="org.nextkde.Kos.Calendar")
+        KOS_CALENDAR_DESKTOP_ID="org.nextks.calendar"
+        KOS_CALENDAR_ACTIVATION_ID="org.nextks.calendar")
 endif()
 
 set(KOS_PIM_SERVICE_EXECUTABLE "" CACHE FILEPATH

@@ -1,38 +1,58 @@
-# Source provenance
+# KOS Apps source provenance
 
-Upstream repository: https://github.com/NextKde/NextKde
+Calendar, Calculator and Weather were consolidated on 2026-11-04 from reviewed
+local checkouts of these repositories and exact branch tips:
 
-Upstream commit: `fe00a434b9d873d82c7ccbf51ef3aedb38db88f0`
+| Source | Packaging commit | Imported tip (CI-skip successor) |
+| --- | --- | --- |
+| https://github.com/NextKde/kos-calendar | `87e29fcf8014d54668810274708280f449211a7f` | `6dc4ea4c372449f89ad78b859f06d1445ed0aaef` |
+| https://github.com/NextKde/kos-calculator | `75d44cf9224e2f92aecc41b59137a967366481c3` | `d196f901285917d40e0c005e375d7c14b4a6b5cd` |
+| https://github.com/NextKde/kos-weather | `974e619d366c43995e34cf8e2c8b0583c62c3e6c` | `3914dbdcb2a804a02c8a36451f67745db3811a78` |
 
-Exported from the corresponding source paths in that working checkout. The application closure had no uncommitted upstream changes at extraction. The independent distribution is GPL-3.0 under the copied root `LICENSE`; all source copyright and shader notices are retained. `shared/demo-ui/upstream-sha256.json` (Calendar only) and `shared/qml/controls/shaders/NOTICE.md` retain nested material provenance. Qt and KDE Frameworks remain external system dependencies.
+Calendar history is the base. Merge `354f1a2aaf6e710e7986faba4f7a7531a4a5d8e8`
+retains Calculator and Weather commit ancestry using an explicit history-only
+ours merge; the subsequent consolidation commit imports their selected source
+files into the mappings below. The merge alone is not a source content merge.
+Old repositories and Releases remain retained; they are not active second copies.
 
-## Exported source paths
+## Path mapping and shared sources
 
-- `apps/common`
-- `shared/i18n`
-- `cmake/KosApplication.cmake`
-- `shared/qml/CMakeLists.txt and only its listed QML/resources plus controls/shaders/NOTICE.md`
-- `apps/calendar`
-- `shared/demo-ui`
-- `shared/pim`
-- `services/pim-service`
+- Calendar `apps/calendar` → `apps/org.nextks.calendar`.
+- Calculator `apps/calculator` → `apps/org.nextks.calculator`.
+- Weather `apps/weather` → `apps/org.nextks.weather`; `backend` → that app's `backend`.
+- Calendar `apps/common` → `shared/common`; translations now list all three apps.
+- Shared QML, i18n, demo-ui, PIM and services use Calendar's complete copies.
+  Shared QML implementation, i18n and CMake helper were compared across sources;
+  differences included notice/README presence and optional test declarations.
+  The shader NOTICE and demo-ui nested provenance are retained, not deduplicated away.
+- Weather third-party notices are retained as `THIRD_PARTY_NOTICES.weather.md`.
+- Original extraction records are retained in `SOURCE_PROVENANCE.kos-calendar.md`,
+  `.kos-calculator.md` and `.kos-weather.md`. Those records describe historical
+  paths/workflows, not current release claims.
 
-## Extraction changes
+The original source was extracted from NextKde/NextKde commit
+`fe00a434b9d873d82c7ccbf51ef3aedb38db88f0`; the copied GPL-3.0 `LICENSE`,
+source copyright and third-party/shader notices remain applicable. Qt/KDE and
+Flatpak runtime/SDK are external dependencies with separate distribution duties.
 
-- CMakeLists.txt (new standalone root)
-- VERSION (independent application version)
-- apps/common/CMakeLists.txt (app-local translation sources and language test path)
-- apps/common/tests/LanguageTest.cpp (moved from tests/localization/LanguageTest.cpp)
-- install.sh (new generic installer entry point)
-- README.md (new independent build/install documentation)
-- .github/workflows/build.yml (new app-only Ubuntu build/tests)
-- .gitignore (app-local build artifacts)
-- services/pim-service/CMakeLists.txt (configurable PIM activation; optional systemd ownership)
-- services/pim-service/data/org.nextkde.Kos.Pim1.service.in (private executable/direct activation)
-- services/pim-service/data/kos-pim-service.service.in (configurable executable)
-- services/pim-service/src/PimStore.cpp (KOS_CALENDAR_EXECUTABLE override, sibling-first relocation)
-- Removed the legacy apps/todo launcher and its unified-activation review; tasks remain integrated in Calendar.
-- apps/calendar/README.md, README.zh-CN.md, ITERATION_PLAN.zh-CN.md omitted (monorepo-only presets/docs references; replaced by root README)
-- `SOURCE_PROVENANCE.md` (this record).
+## Consolidation changes
 
-The generic `packaging/installer.py` is separately supplied from the upstream installer implementation during publication. Stable `app-release.json` is generated from the new repository revision and release archive hash, never copied from the desktop distribution. No user data, credentials, build outputs or machine configuration belong to this source export.
+The root selects `KOS_APPS` and only required dependencies. One VERSION (0.2.0)
+feeds target-scoped new desktop/AppStream/Flatpak identities `org.nextks.<app>`.
+Commands, native preference/data paths and the native PIM wire/bus contract are
+retained. Sandbox PIM and Weather socket paths use the new identity. No old
+Flatpak data or ref is renamed or migrated. Calendar contains reminders; no
+standalone Todo launcher is restored.
+
+Packaging uses three pinned per-app manifests, one parameterized bundle helper,
+app-prefixed Release attachments, retained Sources/build/license materials and
+manual build/artifact workflows. The generic source installer selects one app
+and recognizes only fixed retired ownership IDs for offline compatibility.
+Historical automated test sources are retained as provenance only, are not
+updated or executed for this consolidation, and may still assume old paths/IDs.
+The build defaults to BUILD_TESTING=OFF. Current build/release readiness is
+recorded in packaging/FLATPAK-READINESS.md, not inferred from historical records.
+
+No private keys, credentials, real profiles or machine configuration are source
+inputs. No remote repository creation, package signing or release publication is
+performed by this consolidation.

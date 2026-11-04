@@ -1,32 +1,40 @@
 # 独立 NextKde 应用
 
-Calendar、Calculator、Weather 和 ListenFree 使用各自独立仓库发布源码版本。
+Calendar、Calculator、Weather 合用独立的 `NextKde/kos-apps` 源码仓库与版本；
+ListenFree 继续使用自己的独立仓库。
 KMusic 继续使用原有安装控制器，不经过这里的安装器。
 Settings 与独立仓库随代码分发同一份 `tools/app-installer.py`，只依赖 Python 3 标准库；
 安装时不会下载或执行替代安装器。
 
 | 应用键 | 固定仓库 | 应用 ID | 可执行文件／桌面文件 ID |
 | --- | --- | --- | --- |
-| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar` |
-| `calculator` | `NextKde/kos-calculator` | `org.nextkde.Calculator` | `kos-calculator` |
-| `weather` | `NextKde/kos-weather` | `org.nextkde.Weather` | `kos-weather` |
+| `calendar` | `NextKde/kos-apps` | `org.nextks.calendar` | `kos-calendar` |
+| `calculator` | `NextKde/kos-apps` | `org.nextks.calculator` | `kos-calculator` |
+| `weather` | `NextKde/kos-apps` | `org.nextks.weather` | `kos-weather` |
 | `listenfree` | `NextKde/ListenFree` | `org.nextkde.ListenFree` | `listenfree` |
 
 Todo 已整合进 Calendar 的提醒事项视图，不再提供独立启动入口。旧安装器管理的
 `kos-todo` 链接仅为离线卸载和升级清理保留识别；不会删除外部安装的 Todo。
 
-桌面文件名为上述桌面文件 ID 加 `.desktop`。商店条目不能指定仓库 URL、任意命令、
+前三款新版桌面文件为 `org.nextks.<app>.desktop`，命令名不变；ListenFree 仍用
+`listenfree.desktop`。商店条目不能指定仓库 URL、任意命令、
 可执行文件名或安装根目录。
+
+前三款共用 VERSION／commit／Release，但各有独立包和源码清单，构建时只选
+`-DKOS_APPS=<app>`。旧 `org.nextkde.Calendar`、`org.nextkde.Calculator`、
+`org.nextkde.Weather` Flatpak 是不同的退役 ref；Settings 报 RETIRED_FLATPAK_ID，
+须通过外部工具明确管理旧 ref，不自动卸载或迁移私有数据。旧仓库保留；新远端与签名
+Release 尚未发布。旧安装器所属的源码 ID／桌面链接仍被严格识别，支持离线状态／卸载。
 
 ## 命令接口
 
 ```sh
-python3 tools/app-installer.py --app calculator check-update
-python3 tools/app-installer.py --app calculator check
-python3 tools/app-installer.py --app calculator install --version 0.1.0
-python3 tools/app-installer.py --app calculator status
-python3 tools/app-installer.py --app calculator update
-python3 tools/app-installer.py --app calculator uninstall
+python3 packaging/installer.py --app calculator check-update
+python3 packaging/installer.py --app calculator check
+python3 packaging/installer.py --app calculator install --version 0.2.0
+python3 packaging/installer.py --app calculator status
+python3 packaging/installer.py --app calculator update
+python3 packaging/installer.py --app calculator uninstall
 ```
 
 可选参数 `--version X.Y.Z` 用来确认发现的最新稳定版本与请求一致，不是任意 tag 或
@@ -75,12 +83,13 @@ https://api.github.com/repos/NextKde/<仓库>/releases/latest
 ```
 
 必须是已发布、非草稿、非预发布的稳定 release，tag 为 `vX.Y.Z`，并且有且仅有一个
-名为 `app-release.json` 的附件。清单示例：
+属于所选 kos-apps 应用的 `<appId>.app-release.json` 附件（ListenFree 仍用
+`app-release.json`）。清单示例：
 
 ```json
 {
   "schemaVersion": 1,
-  "appId": "org.nextkde.Calculator",
+  "appId": "org.nextks.calculator",
   "version": "0.1.0",
   "revision": "0123456789012345678901234567890123456789",
   "archiveSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

@@ -13,7 +13,7 @@ add_library(Kos::AppCore ALIAS kos_app_core)
 target_include_directories(kos_app_core
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../shared/i18n>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../i18n>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -21,8 +21,9 @@ find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
 qt_add_translations(kos_app_core
     SOURCE_TARGETS kos_app_core
     SOURCES
-        ../calendar/qml
-        ../../shared/qml/foundation ../../shared/demo-ui ../../shared/pim
+        ../../apps/org.nextks.calendar/qml
+        ../../apps/org.nextks.calculator/qml ../../apps/org.nextks.weather/qml
+        ../qml/foundation ../demo-ui ../pim
     TS_FILES translations/kos_apps_zh_CN.ts translations/kos_apps_pt_BR.ts
         translations/kos_apps_en_US.ts
     RESOURCE_PREFIX /kos/i18n

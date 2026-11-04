@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@KOS_APP_APP_ID@</id>
+  <name>KOS Calculator</name>
+  <name xml:lang="zh_CN">KOS 计算器</name>
+  <summary>Basic and scientific calculation with a searchable history</summary>
+  <summary xml:lang="zh_CN">基本型与科学型计算，支持搜索计算历史</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="org.nextkde"><name>NextKde Contributors</name></developer>
+  <description>
+    <p>Calculate with basic and scientific keypads, convert units, and search recent calculations in one window.</p>
+    <p>Runs independently of the NextKde desktop without network or host filesystem permissions.</p>
+  </description>
+  <launchable type="desktop-id">@KOS_APP_APP_ID@.desktop</launchable>
+  <provides><binary>kos-calculator</binary></provides>
+  <categories><category>Utility</category><category>Calculator</category></categories>
+  <url type="homepage">https://github.com/NextKde/kos-apps</url>
+  <url type="bugtracker">https://github.com/NextKde/kos-apps/issues</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="@KOS_FLATPAK_RELEASE_DATE@"/>
+  </releases>
+</component>

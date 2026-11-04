@@ -1,6 +1,6 @@
 name: Prepare signed Flatpak artifacts
 
-# Manual, artifact-only preparation; deliberately independent of build.yml tests.
+# Manual, artifact-only preparation; no automated tests or application launch.
 # Creating a Release/uploading its assets remains a separate maintainer action.
 on:
   workflow_dispatch:
@@ -17,6 +17,10 @@ permissions:
 
 jobs:
   bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [calendar, calculator, weather]
     runs-on: ubuntu-24.04
     environment: flatpak-signing
     timeout-minutes: 60
@@ -54,7 +58,7 @@ jobs:
           SIGNING_FINGERPRINT: ${{ vars.FLATPAK_SIGNING_FINGERPRINT }}
           RELEASE_DATE: ${{ inputs.release_date }}
         run: |
-          python3 packaging/flatpak/prepare-bundle.py \
+          python3 packaging/flatpak/prepare-bundle.py --app "${{ matrix.app }}" \
             --output tmp/flatpak-release \
             --gpg-homedir "$PWD/tmp/flatpak-signing" \
             --fingerprint "$SIGNING_FINGERPRINT" \
@@ -66,7 +70,7 @@ jobs:
           rm -rf -- tmp/flatpak-signing
       - uses: actions/upload-artifact@v4
         with:
-          name: calendar-flatpak-x86_64
+          name: org.nextks.${{ matrix.app }}-flatpak-x86_64
           path: tmp/flatpak-release/artifacts/
           if-no-files-found: error
           retention-days: 7

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>@KOS_FLATPAK_APP_ID@</id>
+  <id>@KOS_APP_APP_ID@</id>
   <name>KOS Calendar</name>
   <name xml:lang="zh_CN">KOS 日历</name>
   <summary>Manage events, tasks and reminders</summary>
@@ -12,11 +12,11 @@
     <p>Organize events and tasks with a private calendar service. Import and export iCalendar files using the file chooser.</p>
     <p>Background reminders and login autostart require desktop permission. Native profiles and shell widgets are not automatically shared with the sandbox.</p>
   </description>
-  <launchable type="desktop-id">@KOS_FLATPAK_APP_ID@.desktop</launchable>
+  <launchable type="desktop-id">@KOS_APP_APP_ID@.desktop</launchable>
   <provides><binary>kos-calendar</binary></provides>
   <categories><category>Office</category><category>Calendar</category></categories>
-  <url type="homepage">https://github.com/NextKde/kos-calendar</url>
-  <url type="bugtracker">https://github.com/NextKde/kos-calendar/issues</url>
+  <url type="homepage">https://github.com/NextKde/kos-apps</url>
+  <url type="bugtracker">https://github.com/NextKde/kos-apps/issues</url>
   <content_rating type="oars-1.1"/>
   <releases><release version="@PROJECT_VERSION@" date="@KOS_FLATPAK_RELEASE_DATE@"/></releases>
 </component>

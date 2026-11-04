@@ -28,9 +28,9 @@ import urllib.parse
 import urllib.request
 
 APPS = {
-    "calendar": ("kos-calendar", "org.nextkde.Calendar", ("kos-calendar",)),
-    "calculator": ("kos-calculator", "org.nextkde.Calculator", ("kos-calculator",)),
-    "weather": ("kos-weather", "org.nextkde.Weather", ("kos-weather",)),
+    "calendar": ("kos-apps", "org.nextks.calendar", ("kos-calendar",)),
+    "calculator": ("kos-apps", "org.nextks.calculator", ("kos-calculator",)),
+    "weather": ("kos-apps", "org.nextks.weather", ("kos-weather",)),
     "listenfree": ("ListenFree", "org.nextkde.ListenFree", ("listenfree",)),
 }
 SEMVER = re.compile(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z")
@@ -229,12 +229,13 @@ class GitHubClient:
         assets = release.get("assets")
         if not isinstance(assets, list):
             fail("INVALID_RELEASE", "Release assets are missing")
-        matches = [a for a in assets if isinstance(a, dict) and a.get("name") == "app-release.json"]
+        manifest_name = app_id + ".app-release.json" if self.repo == "kos-apps" else "app-release.json"
+        matches = [a for a in assets if isinstance(a, dict) and a.get("name") == manifest_name]
         if len(matches) != 1:
-            fail("RELEASE_UNAVAILABLE", "Release must publish exactly one app-release.json")
+            fail("RELEASE_UNAVAILABLE", "Release must publish exactly one matching application source manifest")
         url = matches[0].get("browser_download_url", "")
         expected_prefix = f"https://github.com/NextKde/{self.repo}/releases/download/"
-        if not isinstance(url, str) or not url.startswith(expected_prefix) or not url.endswith("/app-release.json"):
+        if not isinstance(url, str) or not url.startswith(expected_prefix) or not url.endswith("/" + manifest_name):
             fail("UNTRUSTED_URL", "Manifest is not a repository release asset")
         manifest = self.json(url)
         version, revision, checksum = (manifest.get(k) for k in ("version", "revision", "archiveSha256"))
@@ -293,6 +294,10 @@ def extract_archive(archive, target):
         fail("UNSAFE_ARCHIVE", "Cannot safely unpack source archive", error=str(exc))
 
 
+RETIRED_IDS = {"calendar": "org.nextkde.Calendar", "calculator": "org.nextkde.Calculator",
+               "weather": "org.nextkde.Weather"}
+
+
 class Installer:
     def __init__(self, key, action, requested=None, client=None, emit=None):
         self.key, self.action, self.requested = key, action, requested
@@ -337,14 +342,14 @@ class Installer:
     def validate_journal_info(self, info):
         if info is None:
             return
-        if (not isinstance(info, dict) or info.get("managedBy") != OWNER or info.get("appId") != self.app_id
+        if (not isinstance(info, dict) or info.get("managedBy") != OWNER or info.get("appId") not in (self.app_id, RETIRED_IDS.get(self.key, self.app_id))
                 or not isinstance(info.get("version"), str) or not SEMVER.fullmatch(info["version"])
                 or not isinstance(info.get("revision"), str) or not REVISION.fullmatch(info["revision"])
                 or not isinstance(info.get("versions"), list) or not isinstance(info.get("links"), dict)
                 or any(not isinstance(r, str) or not REVISION.fullmatch(r) for r in info["versions"])
                 or info["revision"] not in info["versions"]):
             fail("CORRUPT_STATE", "Transaction ownership metadata is invalid")
-        base = self.expected_links(self.root / "nonexistent")
+        base = self.expected_links(self.root / "nonexistent", info["appId"])
         legacy = self.legacy_links()
         if set(info["links"]) & set(legacy) and not set(legacy).issubset(info["links"]):
             fail("CORRUPT_STATE", "Transaction omits legacy activation paths")
@@ -526,7 +531,7 @@ class Installer:
         if versions.is_symlink() or not versions.is_dir():
             fail("CORRUPT_STATE", "Version storage is missing or unsafe")
         info = read_json(self.metadata)
-        if (not isinstance(info, dict) or info.get("managedBy") != OWNER or info.get("appId") != self.app_id
+        if (not isinstance(info, dict) or info.get("managedBy") != OWNER or info.get("appId") not in (self.app_id, RETIRED_IDS.get(self.key, self.app_id))
                 or not isinstance(info.get("versions"), list) or not isinstance(info.get("links"), dict)
                 or not isinstance(info.get("revision"), str) or not REVISION.fullmatch(info["revision"])
                 or not isinstance(info.get("version"), str) or not SEMVER.fullmatch(info["version"])):
@@ -543,7 +548,7 @@ class Installer:
             version = self.root / "versions" / revision
             if version.is_symlink() or not version.is_dir():
                 fail("CORRUPT_STATE", "Owned version directory is missing or unsafe")
-        allowed = self.expected_links(expected)
+        allowed = self.expected_links(expected, info["appId"])
         legacy = self.legacy_links()
         if set(info["links"]) & set(legacy):
             allowed.update(legacy)
@@ -565,11 +570,15 @@ class Installer:
                 str(self.data / "applications/kos-todo.desktop"):
                     str(self.current / "share/applications/kos-todo.desktop")}
 
-    def expected_links(self, version):
+    def desktop_name(self, identity=None):
+        identity = identity or self.app_id
+        return (identity if identity.startswith("org.nextks.") else self.executables[0]) + ".desktop"
+
+    def expected_links(self, version, identity=None):
         links = {}
         for executable in self.executables:
             links[str(self.bin / executable)] = str(self.current / "bin" / executable)
-            desktop = executable + ".desktop"
+            desktop = self.desktop_name(identity)
             links[str(self.data / "applications" / desktop)] = str(self.current / "share/applications" / desktop)
         services = version / "share/dbus-1/services"
         if services.is_dir():
@@ -586,6 +595,10 @@ class Installer:
             target = Path(path)
             if present(target) and path not in owned:
                 fail("EXTERNALLY_MANAGED", "Existing user activation is not owned by this installer", path=path)
+        if self.key in RETIRED_IDS:
+            old_desktop = self.data / "applications" / (self.executables[0] + ".desktop")
+            if present(old_desktop) and str(old_desktop) not in owned:
+                fail("EXTERNALLY_MANAGED", "Old desktop activation is not installer-owned", path=str(old_desktop))
         for executable in self.executables:
             for directory in os.get_exec_path():
                 candidate = Path(directory) / executable
@@ -596,9 +609,10 @@ class Installer:
             if directory == self.data:
                 continue
             for executable in self.executables:
-                desktop = directory / "applications" / (executable + ".desktop")
-                if present(desktop):
-                    fail("EXTERNALLY_MANAGED", "Desktop activation is supplied by another installation", path=str(desktop))
+                desktop = directory / "applications" / self.desktop_name()
+                old_desktop = directory / "applications" / (executable + ".desktop")
+                if present(desktop) or present(old_desktop):
+                    fail("EXTERNALLY_MANAGED", "Desktop activation is supplied by another installation", path=str(desktop if present(desktop) else old_desktop))
             for link in links:
                 path = Path(link)
                 if path.suffix == ".service" and present(directory / "dbus-1/services" / path.name):
@@ -657,7 +671,7 @@ class Installer:
     def validate_install(self, version):
         for executable in self.executables:
             binary = version / "bin" / executable
-            desktop = version / "share/applications" / (executable + ".desktop")
+            desktop = version / "share/applications" / self.desktop_name()
             if not regular(binary) or not os.access(binary, os.X_OK) or not regular(desktop):
                 fail("INVALID_INSTALL", "Expected executable or desktop file is missing", executable=executable)
             text = desktop.read_text(encoding="utf-8")
@@ -710,7 +724,8 @@ class Installer:
                 work = Path(scratch)
                 source = self.source(work)
                 self.run_child(["cmake", "-S", str(source), "-B", str(work / "build"), "-G", "Ninja",
-                                "-DBUILD_TESTING=OFF", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_INSTALL_PREFIX={final}"], "configure")
+                                "-DBUILD_TESTING=OFF", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_INSTALL_PREFIX={final}",
+                                *([f"-DKOS_APPS={self.key}"] if self.repo == "kos-apps" else [])], "configure")
                 if check:
                     return "READY", {"dependenciesSatisfied": True, "log": str(self.log), **self.status_details(info)}
                 secure_dir(self.root)
@@ -742,7 +757,7 @@ class Installer:
                 "version": info["version"] if info else None, "revision": info["revision"] if info else None,
                 "currentVersion": info["version"] if info else None,
                 "currentRevision": info["revision"] if info else None, "root": str(self.root),
-                "desktopFile": str(self.data / "applications" / (self.executables[0] + ".desktop")) if info else None}
+                "desktopFile": str(self.data / "applications" / self.desktop_name(info["appId"])) if info else None}
 
     def execute(self):
         with self.lock():
@@ -795,9 +810,10 @@ class Installer:
         except Failure as exc:
             details = self.status_details(self.installed_info)
             if exc.code == "EXTERNALLY_MANAGED" and not self.installed_info:
-                desktop = next((str(directory / "applications" / (self.executables[0] + ".desktop"))
+                desktop = next((str(directory / "applications" / name)
                     for directory in [self.data, *(Path(p) for p in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":") if p)]
-                    if (directory / "applications" / (self.executables[0] + ".desktop")).is_file()), None)
+                    for name in (self.desktop_name(), self.executables[0] + ".desktop")
+                    if (directory / "applications" / name).is_file()), None)
                 details.update(installed=True, managed=False, externalInstallation=True, desktopFile=desktop)
             self.event("result", exc.code, success=False, **{**details, **exc.details})
             return 2

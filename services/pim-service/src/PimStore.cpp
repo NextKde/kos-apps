@@ -1061,7 +1061,7 @@ void PimStore::notificationAction(uint id, const QString &action)
             if (executable.isEmpty()) {
                 executable = directory.filePath(QStringLiteral("kos-calendar"));
                 if (!QFileInfo::exists(executable))
-                    executable = directory.filePath(QStringLiteral("../../apps/calendar/kos-calendar"));
+                    executable = directory.filePath(QStringLiteral("../../apps/org.nextks.calendar/kos-calendar"));
                 if (!QFileInfo::exists(executable))
                     executable = QStandardPaths::findExecutable(QStringLiteral("kos-calendar"));
             }

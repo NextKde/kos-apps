@@ -1,6 +1,7 @@
 # Independent NextKde applications
 
-Calendar, Calculator, Weather and ListenFree are independent source releases.
+Calendar, Calculator and Weather share the independent `NextKde/kos-apps` source
+repository and release version. ListenFree remains in its own repository.
 KMusic retains its existing installation controller and is not handled by this
 installer. Settings and the independent repositories ship the same Python 3
 standard-library installer, `tools/app-installer.py`; installation never fetches
@@ -8,27 +9,36 @@ or executes a replacement installer.
 
 | Key | Fixed repository | Application ID | Executables / desktop IDs |
 | --- | --- | --- | --- |
-| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar` |
-| `calculator` | `NextKde/kos-calculator` | `org.nextkde.Calculator` | `kos-calculator` |
-| `weather` | `NextKde/kos-weather` | `org.nextkde.Weather` | `kos-weather` |
+| `calendar` | `NextKde/kos-apps` | `org.nextks.calendar` | `kos-calendar` |
+| `calculator` | `NextKde/kos-apps` | `org.nextks.calculator` | `kos-calculator` |
+| `weather` | `NextKde/kos-apps` | `org.nextks.weather` | `kos-weather` |
 | `listenfree` | `NextKde/ListenFree` | `org.nextkde.ListenFree` | `listenfree` |
 
 Tasks are integrated in Calendar; no separate Todo entry is exposed. Legacy
 installer-owned `kos-todo` links remain recognized for offline removal and
 upgrade cleanup. Externally installed Todo files are never removed.
 
-Desktop filenames append `.desktop` to these IDs. No repository URL, executable
+New native desktop filenames are `org.nextks.<app>.desktop`; ListenFree retains
+`listenfree.desktop`. Executable names stay unchanged. No repository URL, executable
 name, shell command or installation root is accepted from a store entry.
+
+The first three apps use one VERSION/commit/Release but separate packages, source
+manifests and `-DKOS_APPS=<app>` builds. Old `org.nextkde.Calendar`,
+`org.nextkde.Calculator` and `org.nextkde.Weather` Flatpaks are distinct retired
+refs: Settings reports RETIRED_FLATPAK_ID and requires external exact-ref management.
+No automatic uninstall or private-data migration occurs. Old repositories remain
+retained; the new remote and signed release are not yet published. Old installer-owned
+source IDs/desktop links remain strictly recognized for offline status/uninstall.
 
 ## Command interface
 
 ```sh
-python3 tools/app-installer.py --app calculator check-update
-python3 tools/app-installer.py --app calculator check
-python3 tools/app-installer.py --app calculator install --version 0.1.0
-python3 tools/app-installer.py --app calculator status
-python3 tools/app-installer.py --app calculator update
-python3 tools/app-installer.py --app calculator uninstall
+python3 packaging/installer.py --app calculator check-update
+python3 packaging/installer.py --app calculator check
+python3 packaging/installer.py --app calculator install --version 0.2.0
+python3 packaging/installer.py --app calculator status
+python3 packaging/installer.py --app calculator update
+python3 packaging/installer.py --app calculator uninstall
 ```
 
 `--version X.Y.Z` is an optional consistency requirement against the discovered
@@ -61,7 +71,7 @@ record; earlier `type: "progress"` records are optional. Child output goes only
 to a mode-0600 log, never into this protocol.
 
 ```json
-{"schemaVersion":1,"appId":"org.nextkde.Calculator","action":"status","stage":"status","type":"result","success":true,"code":"INSTALLED","version":"0.1.0","revision":"0123456789012345678901234567890123456789","details":{"installed":true,"managed":true,"available":true,"version":"0.1.0","revision":"0123456789012345678901234567890123456789","currentVersion":"0.1.0","currentRevision":"0123456789012345678901234567890123456789","desktopFile":"/home/example/.local/share/applications/kos-calculator.desktop","root":"/home/example/.local/share/nextkde-apps/calculator"}}
+{"schemaVersion":1,"appId":"org.nextks.calculator","action":"status","stage":"status","type":"result","success":true,"code":"INSTALLED","version":"0.1.0","revision":"0123456789012345678901234567890123456789","details":{"installed":true,"managed":true,"available":true,"version":"0.1.0","revision":"0123456789012345678901234567890123456789","currentVersion":"0.1.0","currentRevision":"0123456789012345678901234567890123456789","desktopFile":"/home/example/.local/share/applications/org.nextks.calculator.desktop","root":"/home/example/.local/share/nextkde-apps/calculator"}}
 ```
 
 `available` means the local allowlisted engine supports this app; it does not
@@ -82,12 +92,13 @@ arguments also produce one JSON result. `--help` prints usage normally.
 The fixed endpoint is
 `https://api.github.com/repos/NextKde/<repository>/releases/latest`.
 A published stable, non-draft release must have a `vX.Y.Z` tag and exactly one
-`app-release.json` asset. Example manifest:
+`<appId>.app-release.json` asset for the selected kos-apps application
+(or `app-release.json` for ListenFree). Example manifest:
 
 ```json
 {
   "schemaVersion": 1,
-  "appId": "org.nextkde.Calculator",
+  "appId": "org.nextks.calculator",
   "version": "0.1.0",
   "revision": "0123456789012345678901234567890123456789",
   "archiveSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
