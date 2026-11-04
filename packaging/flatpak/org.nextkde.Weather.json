@@ -1,0 +1,78 @@
+{
+  "app-id": "org.nextkde.Weather",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.11",
+  "sdk": "org.kde.Sdk",
+  "command": "kos-weather",
+  "cleanup": ["/lib/sdk/go", "/lib/debug/lib/sdk/go"],
+  "finish-args": [
+    "--share=ipc",
+    "--share=network",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=dri"
+  ],
+  "modules": [
+    {
+      "name": "go-build-toolchain",
+      "buildsystem": "simple",
+      "build-commands": [
+        "mkdir -p /app/lib/sdk/go",
+        "cp -a . /app/lib/sdk/go/",
+        "install -Dm644 LICENSE /app/share/licenses/go/LICENSE",
+        "if test -f PATENTS; then install -Dm644 PATENTS /app/share/licenses/go/PATENTS; fi"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://go.dev/dl/go1.27.3.linux-amd64.tar.gz",
+          "sha256": "65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40",
+          "only-arches": [
+            "x86_64"
+          ]
+        },
+        {
+          "type": "archive",
+          "url": "https://go.dev/dl/go1.27.3.linux-arm64.tar.gz",
+          "sha256": "a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49",
+          "only-arches": [
+            "aarch64"
+          ]
+        }
+      ],
+      "cleanup": [
+        "/lib/sdk/go"
+      ]
+    },
+    {
+      "name": "kos-weather",
+      "buildsystem": "cmake-ninja",
+      "build-options": {
+        "append-path": "/app/lib/sdk/go/bin",
+        "env": {
+          "GOTOOLCHAIN": "local",
+          "GOPROXY": "off",
+          "GOSUMDB": "off",
+          "CGO_ENABLED": "0"
+        }
+      },
+      "config-opts": [
+        "-DBUILD_TESTING=OFF",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DKOS_FLATPAK_BUILD=ON"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../..",
+          "skip": [
+            ".git",
+            "tmp",
+            "build",
+            ".flatpak-builder"
+          ]
+        }
+      ]
+    }
+  ]
+}

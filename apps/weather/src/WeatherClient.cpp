@@ -25,10 +25,16 @@ constexpr qsizetype kMaxSocketBufferBytes = 1024 * 1024;
 
 QString stateRoot()
 {
+#ifdef KOS_WEATHER_SANDBOX
+    // Flatpak always remaps data home; inherited XDG_STATE_HOME may name host state.
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+        .filePath(QStringLiteral("state"));
+#else
     const QString configured = qEnvironmentVariable("XDG_STATE_HOME");
     if (!configured.isEmpty())
         return configured;
     return QDir::home().filePath(QStringLiteral(".local/state"));
+#endif
 }
 
 QString runtimeRoot()
@@ -64,7 +70,12 @@ WeatherClient::WeatherClient(QObject *parent)
 {
     // Selection is frozen for this client lifetime. A core socket is opt-in;
     // mere presence of a kos-data.sock file is not proof of compatibility.
+#ifdef KOS_WEATHER_SANDBOX
+    // A sandbox build never consumes an inherited host service override.
+    m_coreBackend = false;
+#else
     m_coreBackend = qEnvironmentVariableIsSet("KOS_DATA_SOCKET");
+#endif
     m_snapshotDirectory = QDir(stateRoot()).filePath(m_coreBackend
         ? QStringLiteral("quickshell/shell-data-service")
         : QStringLiteral("quickshell/kos-weather/standalone-backend"));
@@ -75,7 +86,11 @@ WeatherClient::WeatherClient(QObject *parent)
         m_snapshotPath.clear();
         m_snapshotDirectory.clear();
     } else {
+#ifdef KOS_WEATHER_SANDBOX
+        const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("app/org.nextkde.Weather/backend"));
+#else
         const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("kos-weather-%1").arg(getuid()));
+#endif
         QDir().mkpath(runtime);
         QFile::setPermissions(runtime, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
         m_socketPath = QDir(runtime).filePath(QStringLiteral("weather.sock"));

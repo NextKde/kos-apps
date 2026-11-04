@@ -32,6 +32,9 @@ kos_add_application(kos-weather
 target_include_directories(kos-weather PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+if(KOS_FLATPAK_BUILD)
+    target_compile_definitions(kos-weather PRIVATE KOS_WEATHER_SANDBOX=1)
+endif()
 add_dependencies(kos-weather kos-weather-backend-build)
 target_compile_definitions(kos-weather PRIVATE
     KOS_WEATHER_BACKEND_BUILD_PATH="${KOS_WEATHER_BACKEND_EXECUTABLE}"

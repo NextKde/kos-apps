@@ -5,6 +5,17 @@ Standalone Weather application from NextKde. Version **0.1.0**, application ID
 `kos-weather.desktop`. No NextKde checkout, shell, KWin plugin, telemetry daemon,
 or global service is required.
 
+## Flatpak bundle preparation
+
+[Signed bundle packaging](packaging/flatpak/README.md) prepares GitHub Release
+assets without a hosted app repository. It is not published yet. The sandbox
+build uses the reverse-DNS desktop identity, private XDG data/socket paths and
+its own Go helper; inherited KOS_DATA_SOCKET is ignored. Native behavior below
+is unchanged. Settings/kos-apps discovers GitHub bundle updates; ordinary Flatpak
+uninstall keeps app data. A KDE 6.11 SDK build and unsigned development bundle
+have been produced; signed release helper execution and sandbox/manual runtime
+acceptance remain outstanding.
+
 ## Build and install
 
 Requirements: Linux, CMake >=3.25, C++20 compiler, Go >=1.22, Qt >=6.8 with Core,

@@ -8,13 +8,25 @@ or executes a replacement installer.
 
 | Key | Fixed repository | Application ID | Executables / desktop IDs |
 | --- | --- | --- | --- |
-| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar`, `kos-todo` |
+| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar` |
 | `calculator` | `NextKde/kos-calculator` | `org.nextkde.Calculator` | `kos-calculator` |
 | `weather` | `NextKde/kos-weather` | `org.nextkde.Weather` | `kos-weather` |
 | `listenfree` | `NextKde/ListenFree` | `org.nextkde.ListenFree` | `listenfree` |
 
+Tasks are integrated in Calendar; no separate Todo entry is exposed. Legacy
+installer-owned `kos-todo` links remain recognized for offline removal and
+upgrade cleanup. Externally installed Todo files are never removed.
+
 Desktop filenames append `.desktop` to these IDs. No repository URL, executable
 name, shell command or installation root is accepted from a store entry.
+
+## Optional signed Flatpak bundles
+
+The source commands below are a legacy/developer route, not Flatpak ownership.
+See [Weather bundle preparation](flatpak/README.md) for GitHub `.flatpak` assets,
+private helper/data boundaries and independent signing. No signed package is
+published yet; Settings/CLI discovers these updates, not a hosted NextKde app source
+or a promise of Discover auto-update. Ordinary Flatpak uninstall keeps app data.
 
 ## Command interface
 
