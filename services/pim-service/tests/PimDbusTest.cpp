@@ -152,7 +152,7 @@ void PimDbusTest::serviceDeliversReminder()
     FakeCalendar calendar;
     QVERIFY(bus.registerObject(QStringLiteral("/org/nextkde/Kos/Application"),
                                &calendar, QDBusConnection::ExportAllSlots));
-    QVERIFY(bus.registerService(QStringLiteral("org.nextkde.Kos.Calendar")));
+    QVERIFY(bus.registerService(QStringLiteral("org.nextks.calendar")));
     QSignalSpy activatedSpy(&calendar, &FakeCalendar::activated);
 
     QProcess service;
@@ -185,7 +185,7 @@ void PimDbusTest::serviceDeliversReminder()
     QCOMPARE(notifiedSpy.first().at(0).toString(), QStringLiteral("Reminder fixture"));
 
     QVERIFY(notifications.lastActions.contains(QStringLiteral("default")));
-    QCOMPARE(notifications.lastHints.value(QStringLiteral("desktop-entry")).toString(), QStringLiteral("kos-calendar"));
+    QCOMPARE(notifications.lastHints.value(QStringLiteral("desktop-entry")).toString(), QStringLiteral("org.nextks.calendar"));
     const QString uid = parseObject(createReply.value()).value(QStringLiteral("item")).toObject().value(QStringLiteral("id")).toString();
     // Notify's async reply installs the ID mapping before user interaction.
     QTest::qWait(100);
@@ -217,7 +217,7 @@ void PimDbusTest::serviceDeliversReminder()
         return parseObject(reply.value()).value(QStringLiteral("todos")).toArray().first().toObject().value(QStringLiteral("completed")).toBool();
     };
     QTRY_VERIFY_WITH_TIMEOUT(completed(), 3000);
-    bus.unregisterService(QStringLiteral("org.nextkde.Kos.Calendar"));
+    bus.unregisterService(QStringLiteral("org.nextks.calendar"));
     bus.unregisterObject(QStringLiteral("/org/nextkde/Kos/Application"));
 
     service.terminate();

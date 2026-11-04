@@ -650,6 +650,26 @@ elif "--install" in args:
         self.assertEqual(personal.read_text(), "keep personal data")
         self.assertEqual(type(self).requests, [])
 
+    def test_interrupted_prune_recovers_offline_without_removing_current(self):
+        engine = self.installed()
+        for version, revision in (("1.2.4", REV2), ("1.2.5", "c" * 40)):
+            self.publish(version, revision)
+            self.assertEqual(self.invoke("update")[1]["code"], "INSTALLED")
+        plan = self.invoke("cleanup-plan")[1]["details"]
+        type(self).responses = {}; type(self).requests.clear()
+        with mock.patch.object(app.shutil, "rmtree", side_effect=PermissionError("synthetic prune interruption")):
+            result = self.invoke("prune", confirmed=True, expected_plan=plan["planToken"])[1]
+        self.assertEqual(result["code"], "INSTALLER_ERROR")
+        self.assertTrue(engine.journal.is_file())
+        self.assertEqual(self.invoke("cleanup-plan")[1]["code"], "RECOVERY_REQUIRED")
+        status = self.invoke("status")[1]
+        self.assertEqual(status["details"]["currentVersion"], "1.2.5")
+        self.assertEqual(engine.current.resolve().name, "c" * 40)
+        self.assertTrue((engine.root / "versions" / REV2).is_dir())
+        self.assertFalse((engine.root / "versions" / REV).exists())
+        self.assertFalse(engine.journal.exists())
+        self.assertEqual(type(self).requests, [])
+
     def test_legacy_calendar_owned_links_are_removed_on_upgrade_without_todo(self):
         engine = self.installed()
         info = json.loads(engine.metadata.read_text())

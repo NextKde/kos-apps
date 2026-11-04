@@ -376,6 +376,11 @@ void PimStoreTest::widgetSnapshotRefreshesAfterMutation()
     QVERIFY(snapshotFile.open(QIODevice::ReadOnly));
     const QJsonObject widget = QJsonDocument::fromJson(snapshotFile.readAll()).object();
     QCOMPARE(widget.value(QStringLiteral("schemaVersion")).toInt(), 1);
+    QCOMPARE(widget.value(QStringLiteral("widgetContractVersion")).toInt(), 2);
+    QCOMPARE(widget.value(QStringLiteral("appId")).toString(), QStringLiteral("org.nextks.calendar"));
+    QCOMPARE(widget.value(QStringLiteral("storagePath")).toString(), directory.path());
+    QVERIFY(widget.value(QStringLiteral("generatedAt")).toInteger() > 0);
+    QVERIFY(!widget.value(QStringLiteral("timeZone")).toString().isEmpty());
     QCOMPARE(widget.value(QStringLiteral("todos")).toArray().size(), 1);
     QCOMPARE(widget.value(QStringLiteral("todos")).toArray().first().toObject()
                  .value(QStringLiteral("title")).toString(),

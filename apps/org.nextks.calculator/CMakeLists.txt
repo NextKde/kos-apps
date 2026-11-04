@@ -32,12 +32,10 @@ kos_add_application(kos-calculator
 
 if(BUILD_TESTING)
     find_program(KOS_QMLTESTRUNNER NAMES qmltestrunner qmltestrunner6
-        HINTS /usr/lib/qt6/bin)
-    if(KOS_QMLTESTRUNNER)
-        add_test(NAME kos-calculator.engine
-            COMMAND ${KOS_QMLTESTRUNNER} -input ${CMAKE_CURRENT_SOURCE_DIR}/tests/tst_engine.qml)
-        set_tests_properties(kos-calculator.engine PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software"
-            LABELS "ui;headless" TIMEOUT 20)
-    endif()
+        HINTS /usr/lib/qt6/bin REQUIRED)
+    add_test(NAME kos-calculator.engine
+        COMMAND ${KOS_QMLTESTRUNNER} -input ${CMAKE_CURRENT_SOURCE_DIR}/tests/tst_engine.qml)
+    set_tests_properties(kos-calculator.engine PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software"
+        LABELS "ui;headless" TIMEOUT 20)
 endif()
