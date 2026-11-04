@@ -28,7 +28,7 @@ import urllib.parse
 import urllib.request
 
 APPS = {
-    "calendar": ("kos-calendar", "org.nextkde.Calendar", ("kos-calendar", "kos-todo")),
+    "calendar": ("kos-calendar", "org.nextkde.Calendar", ("kos-calendar",)),
     "calculator": ("kos-calculator", "org.nextkde.Calculator", ("kos-calculator",)),
     "weather": ("kos-weather", "org.nextkde.Weather", ("kos-weather",)),
     "listenfree": ("ListenFree", "org.nextkde.ListenFree", ("listenfree",)),
@@ -345,6 +345,9 @@ class Installer:
                 or info["revision"] not in info["versions"]):
             fail("CORRUPT_STATE", "Transaction ownership metadata is invalid")
         base = self.expected_links(self.root / "nonexistent")
+        legacy = self.legacy_links()
+        if set(info["links"]) & set(legacy) and not set(legacy).issubset(info["links"]):
+            fail("CORRUPT_STATE", "Transaction omits legacy activation paths")
         for path, target in info["links"].items():
             if not isinstance(path, str) or not isinstance(target, str):
                 fail("CORRUPT_STATE", "Transaction link is invalid")
@@ -352,7 +355,7 @@ class Installer:
             valid_service = (service.parent == self.data / "dbus-1/services" and service.suffix == ".service"
                              and service.name not in (".service", "..service")
                              and target == str(self.current / "share/dbus-1/services" / service.name))
-            if base.get(path) != target and not valid_service:
+            if base.get(path) != target and legacy.get(path) != target and not valid_service:
                 fail("CORRUPT_STATE", "Transaction contains an unowned activation path")
         if not set(base).issubset(info["links"]):
             fail("CORRUPT_STATE", "Transaction omits required activation paths")
@@ -541,6 +544,9 @@ class Installer:
             if version.is_symlink() or not version.is_dir():
                 fail("CORRUPT_STATE", "Owned version directory is missing or unsafe")
         allowed = self.expected_links(expected)
+        legacy = self.legacy_links()
+        if set(info["links"]) & set(legacy):
+            allowed.update(legacy)
         for path, target in info["links"].items():
             if path not in allowed or target != allowed[path]:
                 fail("CORRUPT_STATE", "Ownership metadata contains an unexpected link")
@@ -550,6 +556,14 @@ class Installer:
         if set(info["links"]) != set(allowed):
             fail("CORRUPT_STATE", "Ownership metadata omits activation links")
         return info
+
+    def legacy_links(self):
+        # Only old ownership records may retain these retired Calendar entries.
+        if self.key != "calendar":
+            return {}
+        return {str(self.bin / "kos-todo"): str(self.current / "bin/kos-todo"),
+                str(self.data / "applications/kos-todo.desktop"):
+                    str(self.current / "share/applications/kos-todo.desktop")}
 
     def expected_links(self, version):
         links = {}

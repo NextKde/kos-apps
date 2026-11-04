@@ -1,0 +1,31 @@
+{
+  "app-id": "org.nextkde.Calculator",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.11",
+  "sdk": "org.kde.Sdk",
+  "command": "kos-calculator",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=dri"
+  ],
+  "modules": [
+    {
+      "name": "kos-calculator",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DBUILD_TESTING=OFF",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DKOS_FLATPAK_BUILD=ON"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../..",
+          "skip": [".git", "tmp", "build", ".flatpak-builder"]
+        }
+      ]
+    }
+  ]
+}
