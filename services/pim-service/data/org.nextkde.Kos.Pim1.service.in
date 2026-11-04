@@ -1,4 +1,4 @@
 [D-BUS Service]
-Name=org.nextkde.Kos.Pim1
+Name=@KOS_PIM_BUS_NAME@
 Exec="@KOS_PIM_SERVICE_EXECUTABLE@"
 @KOS_PIM_SYSTEMD_ACTIVATION@

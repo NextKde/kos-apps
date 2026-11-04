@@ -9,6 +9,11 @@ qt_add_qml_module(kos_pim_client
         src/PimClient.h
 )
 
+target_compile_definitions(kos_pim_client PRIVATE KOS_PIM_BUS_NAME="${KOS_PIM_BUS_NAME}")
+if(KOS_FLATPAK_BUILD)
+    target_compile_definitions(kos_pim_client PRIVATE KOS_PIM_SANDBOX=1)
+endif()
+
 add_library(Kos::PimClient ALIAS kos_pim_client)
 add_library(Kos::PimClientPlugin ALIAS kos_pim_client_plugin)
 

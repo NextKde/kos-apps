@@ -2,7 +2,11 @@
 
 Standalone Calendar and Reminders for Linux, extracted from [NextKde](https://github.com/NextKde/NextKde). This repository builds without a NextKde checkout, Quickshell, Settings, or KWin plugins. License: GPL-3.0; see `LICENSE` and `SOURCE_PROVENANCE.md`. Application release version: `VERSION`.
 
-Calendar includes day/week/month/year views, events, reminders, iCalendar import/export, and the compatible `kos-todo` launcher. The existing desktop IDs (`kos-calendar.desktop`, `kos-todo.desktop`), executables, preference/data paths, and PIM D-Bus identity `org.nextkde.Kos.Pim1` are preserved. The release catalog appId is `org.nextkde.Calendar`; it does not rename the existing desktop or D-Bus identities.
+Calendar includes day/week/month/year views, events, reminders and iCalendar import/export in one application. Todo is integrated into Calendar; no separate Todo launcher is built or installed. Native builds preserve `kos-calendar.desktop`, preference/data paths, and PIM D-Bus identity `org.nextkde.Kos.Pim1`. The opt-in Flatpak build uses separate `org.nextkde.Calendar` application and `org.nextkde.Calendar.Pim` service identities with private storage; it does not rename or migrate the existing native installation.
+
+## Flatpak bundle preparation
+
+See [packaging/flatpak/README.md](packaging/flatpak/README.md) for the development manifest, scoped PIM, background reminders, migration limits and artifact-only signing workflow. Native and sandbox-identity host builds compile; a KDE 6.11 SDK build and unsigned development bundle have also been produced. The signed release helper (including source artifacts), official Release and sandbox/manual acceptance remain outstanding. Full-profile migration and shared host widgets are not implemented.
 
 ## Dependencies
 
@@ -39,7 +43,7 @@ export XDG_CACHE_HOME="$PWD/tmp/dev/cache" KOS_PIM_STORAGE_DIR="$PWD/tmp/dev/pim
 dbus-run-session -- sh -c './build/services/pim-service/kos-pim-service & service=$!; trap "kill $service" EXIT; ./build/apps/calendar/kos-calendar'
 ```
 
-Use `kos-calendar --help` for entry points, including `--view` and `--item`; `kos-todo` forwards legacy reminder launches to Calendar. Do not launch a second PIM service on a session already owning `org.nextkde.Kos.Pim1`.
+Use `kos-calendar --help` for entry points, including `--view` and `--item`; `kos-calendar --view reminders` opens integrated tasks. Do not launch a second PIM service on a session already owning `org.nextkde.Kos.Pim1`.
 
 ## Stable user installer
 
@@ -58,7 +62,7 @@ The wrapper delegates to the universal Python installer with `--app calendar`. I
 
 ## Private runtime and activation
 
-Kos.Ui, Kos.Demo, and Kos.Pim QML/resources are statically embedded in the app; nothing is installed over core Settings or global shared QML. All CMake installation paths stay under the configured prefix. Binaries: `bin/kos-calendar`, `bin/kos-todo`, `bin/kos-pim-service`. The installer exposes the first two on PATH; the PIM executable need not have a public link.
+Kos.Ui, Kos.Demo, and Kos.Pim QML/resources are statically embedded in the app; nothing is installed over core Settings or global shared QML. All CMake installation paths stay under the configured prefix. Binaries: `bin/kos-calendar`, `bin/kos-pim-service`. The installer exposes only Calendar on PATH; the PIM executable need not have a public link.
 
 `share/dbus-1/services/org.nextkde.Kos.Pim1.service` defaults to direct D-Bus activation using the configured final prefix. Configure `KOS_PIM_SERVICE_EXECUTABLE` for a different activation executable, or `KOS_INSTALL_PIM_ACTIVATION=OFF` when an existing desktop installation already owns the service. Never overwrite a foreign activation file or running desktop service. `KOS_INSTALL_PIM_SYSTEMD_UNIT=ON` optionally installs a user unit and enables systemd delegation in the private activation file; the default is OFF, so the app never depends on an unmanaged systemd unit. CMake does not enable/start units.
 
@@ -66,7 +70,7 @@ Notification actions find sibling `kos-calendar` first, preserving relocation wi
 
 ## App-local tests
 
-Optional `BUILD_TESTING=ON` registers shared application preferences/language tests, Calendar version/QML smoke, PIM store/private-bus tests, and legacy unified activation. No unrelated desktop/sibling tests are registered. `.github/workflows/build.yml` compiles and runs these on Ubuntu with private data directories and D-Bus. Local test runs must likewise isolate `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, and `KOS_PIM_STORAGE_DIR` under `tmp/` and use `dbus-run-session`.
+Optional `BUILD_TESTING=ON` registers shared application preferences/language tests, Calendar version/QML smoke, PIM store/private-bus tests. No unrelated desktop/sibling tests are registered. `.github/workflows/build.yml` compiles and runs these on Ubuntu with private data directories and D-Bus. Local test runs must likewise isolate `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, and `KOS_PIM_STORAGE_DIR` under `tmp/` and use `dbus-run-session`.
 
 ## Independent stable releases
 

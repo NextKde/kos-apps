@@ -53,20 +53,48 @@ function(kos_add_application target)
     get_filename_component(kos_desktop_name "${KOS_APP_DESKTOP_FILE}" NAME)
     string(REGEX REPLACE "\\.in$" "" kos_desktop_name "${kos_desktop_name}")
     set(KOS_APP_EXECUTABLE "${CMAKE_INSTALL_FULL_BINDIR}/${target}")
+    if(KOS_FLATPAK_BUILD)
+        set(kos_desktop_name "${KOS_FLATPAK_APP_ID}.desktop")
+        set(KOS_APP_EXECUTABLE "${target}")
+        target_compile_definitions(${target} PRIVATE
+            KOS_DESKTOP_ID="${KOS_FLATPAK_APP_ID}"
+            KOS_ACTIVATION_ID="${KOS_FLATPAK_APP_ID}"
+        )
+    endif()
     configure_file(
         "${KOS_APP_DESKTOP_FILE}"
         "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}"
         @ONLY
     )
+    if(KOS_FLATPAK_BUILD)
+        file(READ "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" kos_desktop)
+        string(REPLACE "Icon=${target}" "Icon=${KOS_FLATPAK_APP_ID}"
+            kos_desktop "${kos_desktop}")
+        string(REPLACE "StartupWMClass=${target}" "StartupWMClass=${KOS_FLATPAK_APP_ID}"
+            kos_desktop "${kos_desktop}")
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}" "${kos_desktop}")
+    endif()
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${kos_desktop_name}"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
     )
     if(KOS_APP_ICON_FILE)
-        install(FILES "${KOS_APP_ICON_FILE}"
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
-        )
+        if(KOS_FLATPAK_BUILD)
+            install(FILES "${KOS_APP_ICON_FILE}"
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+                RENAME "${KOS_FLATPAK_APP_ID}.svg"
+            )
+        else()
+            install(FILES "${KOS_APP_ICON_FILE}"
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+            )
+        endif()
     endif()
-    if(KOS_APP_METAINFO_FILE)
+    if(KOS_FLATPAK_BUILD)
+        configure_file("${PROJECT_SOURCE_DIR}/packaging/flatpak/metainfo.xml.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/${KOS_FLATPAK_APP_ID}.metainfo.xml" @ONLY)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${KOS_FLATPAK_APP_ID}.metainfo.xml"
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
+    elseif(KOS_APP_METAINFO_FILE)
         install(FILES "${KOS_APP_METAINFO_FILE}"
             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
         )

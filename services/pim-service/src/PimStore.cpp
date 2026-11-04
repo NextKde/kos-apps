@@ -81,15 +81,6 @@ QJsonArray holidaySources()
     return sources;
 }
 
-QString defaultStorageDirectory()
-{
-    const QString configured = qEnvironmentVariable("KOS_PIM_STORAGE_DIR");
-    if (!configured.isEmpty())
-        return configured;
-    return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
-        .filePath(QStringLiteral("kos/pim"));
-}
-
 QString compactJson(const QJsonObject &object)
 {
     return QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact));
@@ -837,6 +828,17 @@ public:
     QHash<uint, NotificationTarget> notifications;
 };
 
+QString PimStore::defaultStorageDirectory()
+{
+#ifndef KOS_PIM_SANDBOX
+    const QString configured = qEnvironmentVariable("KOS_PIM_STORAGE_DIR");
+    if (!configured.isEmpty())
+        return configured;
+#endif
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+        .filePath(QStringLiteral("kos/pim"));
+}
+
 PimStore::PimStore(const QString &storageDirectory, QObject *parent)
     : QObject(parent)
     , d(std::make_unique<Private>(storageDirectory))
@@ -982,7 +984,7 @@ void PimStore::deliverDueReminders()
             QStringLiteral("Notify"));
         QVariantMap hints{
             {QStringLiteral("desktop-entry"),
-             QStringLiteral("kos-calendar")},
+             QStringLiteral(KOS_CALENDAR_DESKTOP_ID)},
             {QStringLiteral("urgency"), static_cast<uchar>(1)},
         };
         QStringList actions{QStringLiteral("default"), chinese ? QStringLiteral("查看详情") : QStringLiteral("View details")};
@@ -1041,7 +1043,7 @@ void PimStore::notificationAction(uint id, const QString &action)
     const QStringList args{QStringLiteral("--item"),
         (target.todo ? QStringLiteral("todo:") : QStringLiteral("event:")) + target.uid};
     QDBusMessage message = QDBusMessage::createMethodCall(
-        QStringLiteral("org.nextkde.Kos.Calendar"),
+        QStringLiteral(KOS_CALENDAR_ACTIVATION_ID),
         QStringLiteral("/org/nextkde/Kos/Application"),
         QStringLiteral("org.nextkde.Kos.Application1"), QStringLiteral("Activate"));
     message.setArguments({args, target.token, QString{}});
@@ -1052,6 +1054,9 @@ void PimStore::notificationAction(uint id, const QString &action)
             const QDir directory(QCoreApplication::applicationDirPath());
             // An explicit override supports custom launch wrappers. Otherwise
             // prefer the sibling binary so an immutable prefix remains relocatable.
+#ifdef KOS_PIM_SANDBOX
+            const QString executable = QStringLiteral("/app/bin/kos-calendar");
+#else
             QString executable = qEnvironmentVariable("KOS_CALENDAR_EXECUTABLE");
             if (executable.isEmpty()) {
                 executable = directory.filePath(QStringLiteral("kos-calendar"));
@@ -1060,6 +1065,7 @@ void PimStore::notificationAction(uint id, const QString &action)
                 if (!QFileInfo::exists(executable))
                     executable = QStandardPaths::findExecutable(QStringLiteral("kos-calendar"));
             }
+#endif
             if (!executable.isEmpty()) {
                 QProcess process;
                 auto environment = QProcessEnvironment::systemEnvironment();

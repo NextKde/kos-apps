@@ -13,12 +13,15 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QUrl>
+#include <QDBusObjectPath>
+#include <QTimer>
+#include <QUuid>
 
 #include <algorithm>
 
 namespace {
 
-constexpr auto serviceName = "org.nextkde.Kos.Pim1";
+constexpr auto serviceName = KOS_PIM_BUS_NAME;
 constexpr auto objectPath = "/Pim";
 constexpr auto interfaceName = "org.nextkde.Kos.Pim1";
 
@@ -65,6 +68,91 @@ PimClient::PimClient(QObject *parent)
         setConnected(registered.isValid() && registered.value());
     }
     refresh();
+}
+
+bool PimClient::sandboxed() const
+{
+#ifdef KOS_PIM_SANDBOX
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool PimClient::backgroundRequestPending() const
+{
+    return !m_backgroundHandle.isEmpty();
+}
+
+void PimClient::requestBackgroundReminders()
+{
+    if (!sandboxed() || backgroundRequestPending())
+        return;
+    auto bus = QDBusConnection::sessionBus();
+    QString sender = bus.baseService();
+    sender.remove(0, 1);
+    sender.replace('.', '_');
+    const QString token = QStringLiteral("calendar_") + QUuid::createUuid().toString(QUuid::Id128);
+    m_backgroundHandle = QStringLiteral("/org/freedesktop/portal/desktop/request/%1/%2").arg(sender, token);
+    if (!bus.connect(QStringLiteral("org.freedesktop.portal.Desktop"), m_backgroundHandle,
+                     QStringLiteral("org.freedesktop.portal.Request"), QStringLiteral("Response"),
+                     this, SLOT(backgroundResponse(uint,QVariantMap)))) {
+        m_backgroundHandle.clear();
+        emit backgroundResult(tr("Unable to subscribe to the background permission request."));
+        return;
+    }
+    emit backgroundRequestChanged();
+    const QString handle = m_backgroundHandle;
+    QVariantMap options{{QStringLiteral("handle_token"), token},
+        {QStringLiteral("reason"), tr("Deliver calendar and task reminders after closing the window and at login.")},
+        {QStringLiteral("autostart"), true},
+        {QStringLiteral("commandline"), QStringList{QStringLiteral("/app/bin/kos-pim-service")}},
+        {QStringLiteral("dbus-activatable"), false}};
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.portal.Desktop"),
+        QStringLiteral("/org/freedesktop/portal/desktop"),
+        QStringLiteral("org.freedesktop.portal.Background"), QStringLiteral("RequestBackground"));
+    message.setArguments({QString{}, options});
+    auto *pending = new QDBusPendingCallWatcher(bus.asyncCall(message, 10000), this);
+    connect(pending, &QDBusPendingCallWatcher::finished, this, [this, pending, handle] {
+        const QDBusPendingReply<QDBusObjectPath> reply = *pending;
+        pending->deleteLater();
+        if (handle != m_backgroundHandle)
+            return;
+        if (reply.isError())
+            finishBackgroundRequest(tr("Background reminders could not be requested: %1").arg(reply.error().message()));
+        else if (reply.value().path() != handle)
+            finishBackgroundRequest(tr("The desktop returned an unexpected background request handle."));
+    });
+    QTimer::singleShot(120000, this, [this, handle] {
+        if (m_backgroundHandle == handle) {
+            auto close = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.portal.Desktop"),
+                handle, QStringLiteral("org.freedesktop.portal.Request"), QStringLiteral("Close"));
+            QDBusConnection::sessionBus().asyncCall(close, 5000);
+            finishBackgroundRequest(tr("Background permission request timed out. Check the desktop's background application settings."));
+        }
+    });
+}
+
+void PimClient::backgroundResponse(uint response, const QVariantMap &results)
+{
+    if (!backgroundRequestPending())
+        return;
+    if (response != 0 || !results.value(QStringLiteral("background")).toBool())
+        finishBackgroundRequest(tr("Background reminders were not allowed. Reminders after closing Calendar are not guaranteed."));
+    else if (!results.value(QStringLiteral("autostart")).toBool())
+        finishBackgroundRequest(tr("Background activity was allowed, but login autostart was not. Open Calendar after logging in to resume reminders."));
+    else
+        finishBackgroundRequest(tr("Background reminders and login autostart were allowed by the desktop."));
+}
+
+void PimClient::finishBackgroundRequest(const QString &message)
+{
+    QDBusConnection::sessionBus().disconnect(QStringLiteral("org.freedesktop.portal.Desktop"),
+        m_backgroundHandle, QStringLiteral("org.freedesktop.portal.Request"), QStringLiteral("Response"),
+        this, SLOT(backgroundResponse(uint,QVariantMap)));
+    m_backgroundHandle.clear();
+    emit backgroundRequestChanged();
+    emit backgroundResult(message);
 }
 
 bool PimClient::ready() const

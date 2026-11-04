@@ -12,6 +12,8 @@ class PimClient : public QObject {
     Q_OBJECT
     QML_ELEMENT
 
+    Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
+    Q_PROPERTY(bool backgroundRequestPending READ backgroundRequestPending NOTIFY backgroundRequestChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY snapshotChanged)
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
@@ -31,6 +33,9 @@ class PimClient : public QObject {
 public:
     explicit PimClient(QObject *parent = nullptr);
 
+    bool sandboxed() const;
+    bool backgroundRequestPending() const;
+    Q_INVOKABLE void requestBackgroundReminders();
     bool ready() const;
     bool connected() const;
     bool busy() const;
@@ -79,6 +84,8 @@ public:
     Q_INVOKABLE void exportIcalendar(const QString &path);
 
 signals:
+    void backgroundRequestChanged();
+    void backgroundResult(const QString &message);
     void snapshotChanged();
     void occurrencesChanged();
     void connectedChanged();
@@ -88,6 +95,7 @@ signals:
     void operationFailed(const QString &operation, const QString &message);
 
 private slots:
+    void backgroundResponse(uint response, const QVariantMap &results);
     void onServiceChanged(const QString &service, const QString &oldOwner,
                           const QString &newOwner);
     void onRemoteChanged(qulonglong revision);
@@ -108,6 +116,8 @@ private:
     void setErrorMessage(const QString &message);
     void changePending(int delta);
 
+    void finishBackgroundRequest(const QString &message);
+    QString m_backgroundHandle;
     QDBusServiceWatcher *m_serviceWatcher = nullptr;
     bool m_ready = false;
     bool m_connected = false;

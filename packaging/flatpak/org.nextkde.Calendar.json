@@ -1,0 +1,64 @@
+{
+  "app-id": "org.nextkde.Calendar",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.11",
+  "sdk": "org.kde.Sdk",
+  "command": "kos-calendar",
+  "finish-args": [
+    "--share=ipc", "--share=network", "--socket=wayland",
+    "--socket=fallback-x11", "--device=dri",
+    "--talk-name=org.freedesktop.Notifications",
+    "--own-name=org.nextkde.Calendar.Pim",
+    "--env=QT_QPA_PLATFORMTHEME=xdgdesktopportal"
+  ],
+  "modules": [
+    {
+      "name": "extra-cmake-modules",
+      "buildsystem": "cmake-ninja",
+      "config-opts": ["-DBUILD_TESTING=OFF"],
+      "cleanup": ["*"],
+      "sources": [{
+        "type": "archive",
+        "url": "https://download.kde.org/stable/frameworks/6.31/extra-cmake-modules-6.31.0.tar.xz",
+        "sha256": "8f74af329e4c918358bfe54316f8cf4d530c28444595a3e2fb15075f72877f17"
+      }]
+    },
+    {
+      "name": "libical",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DCMAKE_INSTALL_LIBDIR=lib", "-DBUILD_SHARED_LIBS=ON", "-DBUILD_TESTING=OFF",
+        "-DLIBICAL_GLIB=OFF", "-DLIBICAL_BUILD_DOCS=OFF",
+        "-DLIBICAL_BUILD_EXAMPLES=OFF", "-DLIBICAL_BUILD_TESTING=OFF",
+        "-DLIBICAL_JAVA_BINDINGS=OFF"
+      ],
+      "sources": [{
+        "type": "archive",
+        "url": "https://github.com/libical/libical/releases/download/v4.0.7/libical-4.0.7.tar.gz",
+        "sha256": "47c05bc96e41416578cf1803bb2ba3f8d292cb17d5ac2fca539dee922bae8a94"
+      }]
+    },
+    {
+      "name": "kcalendarcore",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DBUILD_TESTING=OFF", "-DCMAKE_INSTALL_LIBDIR=lib",
+        "-DBUILD_PYTHON_BINDINGS=OFF"
+      ],
+      "sources": [{
+        "type": "archive",
+        "url": "https://download.kde.org/stable/frameworks/6.31/kcalendarcore-6.31.0.tar.xz",
+        "sha256": "dd09650c406ef60ddb3e3fe55dd4faca819a500175197f88f8f2279ebb4fe16e"
+      }]
+    },
+    {
+      "name": "kos-calendar",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DBUILD_TESTING=OFF", "-DCMAKE_BUILD_TYPE=Release", "-DKOS_FLATPAK_BUILD=ON",
+        "-DKOS_INSTALL_PIM_ACTIVATION=ON", "-DKOS_INSTALL_PIM_SYSTEMD_UNIT=OFF"
+      ],
+      "sources": [{"type": "dir", "path": "../..", "skip": [".git", "tmp", "build", ".flatpak-builder"]}]
+    }
+  ]
+}

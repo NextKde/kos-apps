@@ -4,6 +4,8 @@
 #include <QDBusConnection>
 #include <QDBusError>
 #include <QDebug>
+#include <QDir>
+#include <QLockFile>
 #include <QSocketNotifier>
 #include <QTimer>
 
@@ -76,19 +78,38 @@ int main(int argc, char *argv[])
     if (!installSignalHandlers(&application))
         return 1;
 
-    PimStore store;
     QDBusConnection bus = QDBusConnection::sessionBus();
+    if (!bus.isConnected()) {
+        qCritical() << "Unable to connect to the session bus:" << bus.lastError().message();
+        return 1;
+    }
+    // Acquire the name before even opening the store. A rejected second process
+    // must not load or flush an independent in-memory copy of the same data.
+    if (!bus.registerService(QStringLiteral(KOS_PIM_BUS_NAME))) {
+        qCritical() << "Unable to own PIM service name:" << bus.lastError().message();
+        return 1;
+    }
+    const QString storageDirectory = PimStore::defaultStorageDirectory();
+    if (!QDir().mkpath(storageDirectory)) {
+        qCritical() << "Unable to create PIM storage directory:" << storageDirectory;
+        return 1;
+    }
+    // Also arbitrate separate session buses using the same directory. Older
+    // native releases do not honor this lock; sandbox storage stays separate.
+    QLockFile storageLock(QDir(storageDirectory).filePath(QStringLiteral("service.lock")));
+    storageLock.setStaleLockTime(0);
+    if (!storageLock.tryLock(0)) {
+        qCritical() << "PIM storage is already in use or cannot be locked:" << storageDirectory
+                    << storageLock.error();
+        return 1;
+    }
+    PimStore store(storageDirectory);
     if (!bus.registerObject(QStringLiteral("/Pim"), &store,
                             QDBusConnection::ExportAllSlots
                                 | QDBusConnection::ExportAllSignals)) {
         qCritical() << "Unable to export PIM object:" << bus.lastError().message();
         return 1;
     }
-    if (!bus.registerService(QStringLiteral("org.nextkde.Kos.Pim1"))) {
-        qCritical() << "Unable to own PIM service name:" << bus.lastError().message();
-        return 1;
-    }
-
     // D-Bus-activated services must not outlive the session bus. This can
     // otherwise leave a detached PIM process behind when a user logs out or a
     // private test session ends.

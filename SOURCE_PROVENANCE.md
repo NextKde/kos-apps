@@ -13,7 +13,6 @@ Exported from the corresponding source paths in that working checkout. The appli
 - `cmake/KosApplication.cmake`
 - `shared/qml/CMakeLists.txt and only its listed QML/resources plus controls/shaders/NOTICE.md`
 - `apps/calendar`
-- `apps/todo/CMakeLists.txt, src/, data/kos-todo.desktop.in (legacy launcher only; obsolete Todo UI excluded)`
 - `shared/demo-ui`
 - `shared/pim`
 - `services/pim-service`
@@ -32,7 +31,7 @@ Exported from the corresponding source paths in that working checkout. The appli
 - services/pim-service/data/org.nextkde.Kos.Pim1.service.in (private executable/direct activation)
 - services/pim-service/data/kos-pim-service.service.in (configurable executable)
 - services/pim-service/src/PimStore.cpp (KOS_CALENDAR_EXECUTABLE override, sibling-first relocation)
-- apps/calendar/tests/run-unified-activation-review.py (standalone default build directory and repo-local temporary isolation)
+- Removed the legacy apps/todo launcher and its unified-activation review; tasks remain integrated in Calendar.
 - apps/calendar/README.md, README.zh-CN.md, ITERATION_PLAN.zh-CN.md omitted (monorepo-only presets/docs references; replaced by root README)
 - `SOURCE_PROVENANCE.md` (this record).
 

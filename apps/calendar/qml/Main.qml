@@ -1035,6 +1035,7 @@ KosApplicationWindow {
     Connections {
         target: pim
 
+        function onBackgroundResult(message) { root.showStatus(message) }
         function onSnapshotChanged() { Qt.callLater(root.revealActivatedItem) }
         function onOperationFailed(operation, message) {
             root.showStatus(message)
@@ -1702,6 +1703,12 @@ KosApplicationWindow {
                     onTriggered: exportDialog.open()
                 }
                 MenuSeparator {}
+                Demo.LiquidPopoverItem {
+                    visible: pim.sandboxed
+                    text: qsTr("Enable background reminders…")
+                    enabled: !pim.backgroundRequestPending
+                    onTriggered: pim.requestBackgroundReminders()
+                }
                 Demo.LiquidPopoverItem {
                     text: qsTr("Calendar settings")
                     onTriggered: settingsDialog.open()

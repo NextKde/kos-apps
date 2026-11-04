@@ -7,10 +7,13 @@ Settings 与独立仓库随代码分发同一份 `tools/app-installer.py`，只�
 
 | 应用键 | 固定仓库 | 应用 ID | 可执行文件／桌面文件 ID |
 | --- | --- | --- | --- |
-| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar`、`kos-todo` |
+| `calendar` | `NextKde/kos-calendar` | `org.nextkde.Calendar` | `kos-calendar` |
 | `calculator` | `NextKde/kos-calculator` | `org.nextkde.Calculator` | `kos-calculator` |
 | `weather` | `NextKde/kos-weather` | `org.nextkde.Weather` | `kos-weather` |
 | `listenfree` | `NextKde/ListenFree` | `org.nextkde.ListenFree` | `listenfree` |
+
+Todo 已整合进 Calendar 的提醒事项视图，不再提供独立启动入口。旧安装器管理的
+`kos-todo` 链接仅为离线卸载和升级清理保留识别；不会删除外部安装的 Todo。
 
 桌面文件名为上述桌面文件 ID 加 `.desktop`。商店条目不能指定仓库 URL、任意命令、
 可执行文件名或安装根目录。

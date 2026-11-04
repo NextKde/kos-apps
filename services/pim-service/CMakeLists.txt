@@ -21,7 +21,18 @@ target_link_libraries(kos-pim-service PRIVATE
 )
 target_compile_definitions(kos-pim-service PRIVATE
     KOS_APP_VERSION="${PROJECT_VERSION}"
+    KOS_PIM_BUS_NAME="${KOS_PIM_BUS_NAME}"
 )
+if(KOS_FLATPAK_BUILD)
+    target_compile_definitions(kos_pim_service_core PRIVATE
+        KOS_PIM_SANDBOX=1
+        KOS_CALENDAR_DESKTOP_ID="${KOS_FLATPAK_APP_ID}"
+        KOS_CALENDAR_ACTIVATION_ID="${KOS_FLATPAK_APP_ID}")
+else()
+    target_compile_definitions(kos_pim_service_core PRIVATE
+        KOS_CALENDAR_DESKTOP_ID="kos-calendar"
+        KOS_CALENDAR_ACTIVATION_ID="org.nextkde.Kos.Calendar")
+endif()
 
 set(KOS_PIM_SERVICE_EXECUTABLE "" CACHE FILEPATH
     "PIM activation executable override; empty uses this installation prefix")
@@ -30,13 +41,19 @@ if(NOT KOS_PIM_SERVICE_EXECUTABLE)
 endif()
 option(KOS_INSTALL_PIM_ACTIVATION "Install private-prefix D-Bus activation file" ON)
 option(KOS_INSTALL_PIM_SYSTEMD_UNIT "Install optional user systemd unit (installer must own it)" OFF)
+if(KOS_FLATPAK_BUILD)
+    if(KOS_INSTALL_PIM_SYSTEMD_UNIT)
+        message(FATAL_ERROR "Flatpak uses portal autostart, not a host systemd unit")
+    endif()
+    set(KOS_PIM_SERVICE_EXECUTABLE "/app/bin/kos-pim-service")
+endif()
 set(KOS_PIM_SYSTEMD_ACTIVATION "")
 if(KOS_INSTALL_PIM_SYSTEMD_UNIT)
     set(KOS_PIM_SYSTEMD_ACTIVATION "SystemdService=kos-pim-service.service")
 endif()
 configure_file(
     data/org.nextkde.Kos.Pim1.service.in
-    ${CMAKE_CURRENT_BINARY_DIR}/org.nextkde.Kos.Pim1.service
+    ${CMAKE_CURRENT_BINARY_DIR}/${KOS_PIM_BUS_NAME}.service
     @ONLY
 )
 configure_file(
@@ -49,7 +66,7 @@ install(TARGETS kos-pim-service
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 if(KOS_INSTALL_PIM_ACTIVATION)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.nextkde.Kos.Pim1.service
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${KOS_PIM_BUS_NAME}.service
         DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/services)
 endif()
 if(KOS_INSTALL_PIM_SYSTEMD_UNIT)

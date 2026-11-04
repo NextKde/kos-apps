@@ -1,0 +1,72 @@
+name: Prepare signed Flatpak artifacts
+
+# Manual, artifact-only preparation; deliberately independent of build.yml tests.
+# Creating a Release/uploading its assets remains a separate maintainer action.
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Reviewed full 40-character source commit (including packaging)
+        required: true
+      release_date:
+        description: AppStream release date (YYYY-MM-DD)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    environment: flatpak-signing
+    timeout-minutes: 60
+    steps:
+      - name: Validate immutable input
+        env:
+          SOURCE_REVISION: ${{ inputs.revision }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+        run: |
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$RELEASE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision }}
+          persist-credentials: false
+      - name: Provision build tools and runtime in the CI user only
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder ostree gnupg python3
+          # Build dependencies only; no app source/remote is added to users' machines.
+          flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak --user install --noninteractive flathub org.kde.Sdk//6.11 org.kde.Platform//6.11
+      - name: Import pre-provisioned signing key into a disposable private home
+        env:
+          SIGNING_KEY: ${{ secrets.FLATPAK_SIGNING_KEY }}
+          SIGNING_FINGERPRINT: ${{ vars.FLATPAK_SIGNING_FINGERPRINT }}
+        run: |
+          set -euo pipefail
+          test -n "$SIGNING_KEY"
+          [[ "$SIGNING_FINGERPRINT" =~ ^[0-9A-F]{40}([0-9A-F]{24})?$ ]]
+          install -d -m 700 tmp/flatpak-signing
+          printf '%s' "$SIGNING_KEY" | gpg --batch --homedir "$PWD/tmp/flatpak-signing" --import
+      - name: Build and sign artifacts (no tests or application launch)
+        env:
+          SIGNING_FINGERPRINT: ${{ vars.FLATPAK_SIGNING_FINGERPRINT }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+        run: |
+          python3 packaging/flatpak/prepare-bundle.py \
+            --output tmp/flatpak-release \
+            --gpg-homedir "$PWD/tmp/flatpak-signing" \
+            --fingerprint "$SIGNING_FINGERPRINT" \
+            --release-date "$RELEASE_DATE"
+      - name: Remove signing material
+        if: always()
+        run: |
+          gpgconf --homedir "$PWD/tmp/flatpak-signing" --kill all || true
+          rm -rf -- tmp/flatpak-signing
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calendar-flatpak-x86_64
+          path: tmp/flatpak-release/artifacts/
+          if-no-files-found: error
+          retention-days: 7
