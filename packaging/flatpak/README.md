@@ -59,7 +59,9 @@ private `$XDG_DATA_HOME/kos/pim`. Native PIM keeps `org.nextkde.Kos.Pim1`; compe
 old native writers are not protected by the new service's lock. Background
 reminders require explicit desktop portal permission. Denial/partial/timeout
 messages exist, but close/relogin/notification behavior needs manual acceptance.
-iCalendar import is not full-profile migration; host shell widgets are not bridged.
+iCalendar import is not full-profile migration. Identity-bound read-only host
+widget summaries are implemented; see ../WidgetIntegration.md for their limited
+scope and pending sandbox/runtime acceptance.
 
 Weather runs its own Go helper, ignores inherited KOS_DATA_SOCKET in the sandbox,
 and uses an app-ID-scoped runtime socket. Calculator needs neither Go nor PIM.
