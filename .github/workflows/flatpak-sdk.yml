@@ -102,6 +102,17 @@ jobs:
                   raise SystemExit(f'{role} changed during build')
           PY
           ostree --repo=tmp/sdk/repo refs > tmp/sdk/evidence/exported-refs.txt
+          if [[ "$APP" == calendar ]]; then
+            ostree --repo=tmp/sdk/repo ls -R app/org.nextks.calendar/x86_64/stable \
+              > tmp/sdk/evidence/calendar-files.txt
+            grep -q '/files/share/locale/.*/LC_MESSAGES/.*\\.mo' tmp/sdk/evidence/calendar-files.txt
+            ostree --repo=tmp/sdk/repo cat app/org.nextks.calendar/x86_64/stable /metadata \
+              > tmp/sdk/evidence/calendar-metadata.ini
+            if grep -q '^\\[Extension org.nextks.calendar.Locale\\]' tmp/sdk/evidence/calendar-metadata.ini; then
+              printf '%s\n' 'Unexpected separate Calendar Locale extension' >&2
+              exit 1
+            fi
+          fi
           python3 - <<'PY'
           import importlib.util
           import os

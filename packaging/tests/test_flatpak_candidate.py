@@ -57,6 +57,10 @@ class CandidateTest(unittest.TestCase):
     def import_candidate(self):
         return bundle.import_candidate(self.candidate, self.app_id, self.revision, self.args, self.work)
 
+    def test_calendar_keeps_translations_in_main_bundle(self):
+        manifest = json.loads((ROOT / "packaging/flatpak/org.nextks.calendar.json").read_text())
+        self.assertIs(manifest["separate-locales"], False)
+
     def test_valid_candidate_is_copied_not_modified(self):
         self.assertEqual(self.import_candidate(), self.environment)
         self.assertTrue((self.work / "repo/config").is_file())

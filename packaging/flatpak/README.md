@@ -2,7 +2,9 @@
 
 No renamed signed release is published. Three manifests build one selected app
 each: `org.nextks.calendar.json`, `org.nextks.calculator.json`, and
-`org.nextks.weather.json`. They use KDE Platform/Sdk 6.11 and preserve pinned
+`org.nextks.weather.json`. Calendar keeps dependency translations in its main
+bundle (`separate-locales: false`), avoiding an undeployed Locale extension in
+URL-less bundle installations. They use KDE Platform/Sdk 6.11 and preserve pinned
 build dependencies, disabled tests and per-app permissions. A source-only or host
 build is not SDK or sandbox acceptance.
 
