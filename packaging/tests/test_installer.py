@@ -51,7 +51,7 @@ class FixtureClient(app.GitHubClient):
         super().validate_url(url)
         if url.endswith("/releases/latest"):
             route = "/release"
-        elif url.endswith(".app-release.json"):
+        elif url.endswith(".app-release.json") or url.endswith("/app-release.json"):
             route = "/manifest"
         else:
             route = "/archive"
@@ -114,7 +114,7 @@ if "-S" in args:
     if os.environ.get("FIXTURE_CONFIGURE_FAIL"): sys.exit(11)
     build=pathlib.Path(args[args.index("-B")+1]); build.mkdir(parents=True)
     prefix=next(a.split("=",1)[1] for a in args if a.startswith("-DCMAKE_INSTALL_PREFIX="))
-    selected=next(a.split("=",1)[1] for a in args if a.startswith("-DKOS_APPS="))
+    selected=next((a.split("=",1)[1] for a in args if a.startswith("-DKOS_APPS=")), "listenfree")
     (build/"fixture.json").write_text(json.dumps({{"prefix":prefix,"app":selected}}))
 elif "--build" in args:
     if os.environ.get("FIXTURE_BUILD_FAIL"): sys.exit(12)
@@ -123,8 +123,10 @@ elif "--install" in args:
     prefix=pathlib.Path(config["prefix"]); selected=config["app"]
     (prefix/"bin").mkdir(parents=True, exist_ok=True)
     (prefix/"share/applications").mkdir(parents=True, exist_ok=True)
-    binary=prefix/"bin"/("kos-"+selected); binary.write_text("#!/bin/sh\\nexit 0\\n"); binary.chmod(0o755)
-    (prefix/"share/applications"/("org.nextks."+selected+".desktop")).write_text("[Desktop Entry]\\nType=Application\\nExec="+str(binary)+"\\n")
+    command="listenfree" if selected=="listenfree" else "kos-"+selected
+    desktop="listenfree" if selected=="listenfree" else "org.nextks."+selected
+    binary=prefix/"bin"/command; binary.write_text("#!/bin/sh\\nexit 0\\n"); binary.chmod(0o755)
+    (prefix/"share/applications"/(desktop+".desktop")).write_text("[Desktop Entry]\\nType=Application\\nExec="+str(binary)+"\\n")
     if selected=="calendar":
         (prefix/"share/dbus-1/services").mkdir(parents=True)
         (prefix/"share/dbus-1/services/org.nextkde.Kos.Pim1.service").write_text("[D-BUS Service]\\nName=org.nextkde.Kos.Pim1\\nExec="+str(binary)+"\\n")
@@ -138,13 +140,13 @@ elif "--install" in args:
     def publish(self, version="1.2.3", revision=REV):
         self.archive = archive_bytes()
         key = getattr(self, "key", "calendar")
-        self.app_id = "org.nextks." + key
+        repository, self.app_id, _ = app.APPS[key]
         self.manifest = {"schemaVersion": 1, "appId": self.app_id, "version": version,
                          "revision": revision, "archiveSha256": hashlib.sha256(self.archive).hexdigest()}
-        asset = self.app_id + ".app-release.json"
+        asset = self.app_id + ".app-release.json" if repository == "kos-apps" else "app-release.json"
         self.release = {"draft": False, "prerelease": False, "tag_name": "v" + version,
                         "assets": [{"name": asset, "browser_download_url":
-                            "https://github.com/NextKde/kos-apps/releases/download/v" + version + "/" + asset}]}
+                            "https://github.com/NextKde/" + repository + "/releases/download/v" + version + "/" + asset}]}
         self.sync()
 
     def sync(self):
@@ -154,7 +156,8 @@ elif "--install" in args:
     def invoke(self, action, requested=None, **options):
         events = []
         engine = app.Installer(getattr(self, "key", "calendar"), action, requested,
-            client=FixtureClient("kos-apps", self.base), emit=events.append, **options)
+            client=FixtureClient(app.APPS[getattr(self, "key", "calendar")][0], self.base),
+            emit=events.append, **options)
         exit_code = engine.run()
         results = [event for event in events if event["type"] == "result"]
         self.assertEqual(len(results), 1, events)
@@ -616,11 +619,11 @@ elif "--install" in args:
                 self.key = key
                 self.publish()
                 engine = self.installed()
-                desktop = self.home / "data/applications" / (self.app_id + ".desktop")
+                desktop = self.home / "data/applications" / engine.desktop_name()
                 self.assertTrue(desktop.is_symlink())
                 self.assertFalse((engine.current / "bin/kos-todo").exists())
                 self.assertEqual(sorted(path.name for path in (engine.current / "bin").iterdir()),
-                                 ["kos-" + key])
+                                 list(app.APPS[key][2]))
                 self.publish("1.2.4", REV2)
                 self.assertEqual(self.invoke("update")[1]["code"], "INSTALLED")
                 self.assertEqual(self.invoke("status")[1]["details"]["currentVersion"], "1.2.4")
