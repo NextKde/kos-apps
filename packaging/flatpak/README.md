@@ -100,5 +100,15 @@ menu launch, independent update/uninstall, external uninstall synchronization,
 old/new ID conflict handling, network failure/cancellation/signature errors,
 Calendar portal/PIM/background/notification lifecycle, and Weather backend exit.
 Do not use personal profiles or equate compilation with runtime acceptance.
-Old-ID unsigned SDK development bundles are historical evidence only; this
-renamed monorepo has not completed a signed SDK build or end-to-end acceptance.
+Old-ID unsigned SDK development bundles are historical evidence only. New-ID
+SDK exports and separately signed local candidates exist; their exact revisions
+and remaining gates are recorded in ../FLATPAK-READINESS.md. Neither signing nor
+successful SDK compilation establishes end-to-end acceptance.
+
+Calendar explicitly retains libical's license selection, full LICENSES directory,
+third-party notices and contributors, and KCalendarCore's LICENSES and README under
+`/app/share/licenses/`. These supplement the corresponding Sources bundle, not
+replace it. Application shader and Demo UI provenance are installed under
+`/app/share/doc/kos-apps/`. External KDE runtime/SDK redistribution and complete
+source/relinking obligations remain a separate review; these notice copies are
+not a blanket license-compliance certification.

@@ -46,6 +46,11 @@
         "-DLIBICAL_BUILD_TESTING=OFF",
         "-DLIBICAL_JAVA_BINDINGS=OFF"
       ],
+      "post-install": [
+        "install -d /app/share/licenses/libical",
+        "cp -a LICENSES /app/share/licenses/libical/",
+        "install -m644 LICENSE.txt COPYING.LESSER.txt 3RDPARTY.md CONTRIBUTORS.md README.md /app/share/licenses/libical/"
+      ],
       "sources": [
         {
           "type": "archive",
@@ -61,6 +66,11 @@
         "-DBUILD_TESTING=OFF",
         "-DCMAKE_INSTALL_LIBDIR=lib",
         "-DBUILD_PYTHON_BINDINGS=OFF"
+      ],
+      "post-install": [
+        "install -d /app/share/licenses/kcalendarcore",
+        "cp -a LICENSES /app/share/licenses/kcalendarcore/",
+        "install -m644 README.md /app/share/licenses/kcalendarcore/"
       ],
       "sources": [
         {

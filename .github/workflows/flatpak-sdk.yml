@@ -102,10 +102,26 @@ jobs:
                   raise SystemExit(f'{role} changed during build')
           PY
           ostree --repo=tmp/sdk/repo refs > tmp/sdk/evidence/exported-refs.txt
+          ostree --repo=tmp/sdk/repo ls -R "app/org.nextks.$APP/x86_64/stable" \
+            > tmp/sdk/evidence/runtime-files.txt
+          grep -Fq '/files/share/doc/kos-apps/SHADER_NOTICE.md' tmp/sdk/evidence/runtime-files.txt
+          if [[ "$APP" == calendar || "$APP" == weather ]]; then
+            grep -Fq '/files/share/doc/kos-apps/DEMO_UI_NOTICE.md' tmp/sdk/evidence/runtime-files.txt
+          fi
           if [[ "$APP" == calendar ]]; then
             ostree --repo=tmp/sdk/repo ls -R app/org.nextks.calendar/x86_64/stable \
               > tmp/sdk/evidence/calendar-files.txt
             grep -Eq '/files/share/locale/.*/LC_MESSAGES/.*\.(mo|qm)$' tmp/sdk/evidence/calendar-files.txt
+            for notice in \
+              libical/LICENSE.txt \
+              libical/LICENSES/LGPL-2.1-only.txt \
+              libical/LICENSES/MPL-2.0.txt \
+              libical/LICENSES/BSD-3-Clause.txt \
+              libical/LICENSES/LicenseRef-APPLEMIT.txt \
+              kcalendarcore/LICENSES/LGPL-2.0-or-later.txt \
+              kcalendarcore/LICENSES/LGPL-3.0-or-later.txt; do
+              grep -Fq "/files/share/licenses/$notice" tmp/sdk/evidence/calendar-files.txt
+            done
             ostree --repo=tmp/sdk/repo cat app/org.nextks.calendar/x86_64/stable /metadata \
               > tmp/sdk/evidence/calendar-metadata.ini
             if grep -Fq '[Extension org.nextks.calendar.Locale]' tmp/sdk/evidence/calendar-metadata.ini; then

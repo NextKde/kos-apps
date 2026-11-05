@@ -32,17 +32,31 @@ tests now run only in hosted CI or the dedicated VM.
 
 ## Outstanding signed-delivery gates
 
-The exact consolidated source 03c92edd0b0c9f54013ba8c63ee1e591482eb928 completed
-all three new-ID KDE 6.11 app/Sources exports in
-[SDK run 41945820505](https://github.com/NextKde/kos-apps/actions/runs/41945820505).
-Both native push and PR validation also succeeded at that revision. These exports
-are unsigned candidates, not accepted production bundles. Separate candidate
-import/signing is being validated; genuine publisher signatures including retained
-Sources/provenance, source/license review and signed stable Release remain pending.
-Core 3079b238e43ffa68ecbca90676ba39c63af245c1 embeds the reviewed Flathub runtime-only
-URL/primary policy and passed its hosted gates. Users still configure their own
-runtime source; no consumer remote is added. Source upload, SDK exports and green
-native CI are not an installable signed release.
+The exact consolidated source ff5ed00f7d954d83c3e9621866f08153e372fd94 completed
+all three new-ID KDE 6.11 app/Sources exports and retained-candidate integrity checks
+in [SDK run 41951329778](https://github.com/NextKde/kos-apps/actions/runs/41951329778).
+[Native PR validation 41951329916](https://github.com/NextKde/kos-apps/actions/runs/41951329916)
+also passed: 63 Python cases (52 installer and 11 packaging), Calendar 12 CTests,
+Calculator 10 and Weather 10. Shared cases repeat across application jobs.
+Separately signed local app/Sources bundles, manifests, checksums and material
+archives were prepared from those three candidates with the existing publisher
+key; no private key was uploaded. They are not published or accepted final bundles.
+
+Material inspection found Calendar's bundled libical/KCalendarCore libraries lacked
+their license-text directories in the runtime inventory. The current packaging
+retains those upstream texts/notices and installs application shader/Demo UI
+provenance. Native staging and SDK inventory gates check their presence. The
+ff5ed00 candidates predate this correction and must not be published as final;
+a matched-source set must be rebuilt, checked and signed after the fix passes.
+Full source/license review, final bundle/installed-commit verification, actual
+transactions and desktop acceptance still remain, as does a signed stable Release.
+
+Core d7075a1703967cce6613ff6f5c05264669eb389e embeds the reviewed Flathub runtime-only
+URL/primary policy and passed its hosted gates, including genuine publisher
+signature acceptance and tampering rejection through the production verifier.
+That public fixture is not final-bundle verification. Users still configure their
+own runtime source; no consumer remote is added. Source upload, SDK exports and
+green native CI are not an installable signed release.
 
 Calendar retains scoped sandbox PIM/private storage, pre-store ownership locking
 and Background portal request/refusal/partial/timeout handling. Portal, closing,
@@ -63,9 +77,9 @@ migrates or removes retired org.nextkde.* refs automatically.
 The dedicated VM remains inaccessible over SSH; no successful VM sync/build/
 install/relogin/shot is recorded for this candidate. Core Settings/platform/widget
 regressions and the runtime-only trust update passed all jobs in
-[run 41947645841](https://github.com/NextKde/NextKde/actions/runs/41947645841),
+[run 41950649175](https://github.com/NextKde/NextKde/actions/runs/41950649175),
 including 17/17 data/platform, 58/58 logic, 27/27 headless and 2/2 widget tests;
-both Nix configurations passed run 41947645918. This is not live VM acceptance.
+both Nix configurations passed run 41950649198. This is not live VM acceptance.
 No real new-ID installation, data migration, graphical session, signing-workflow
 dispatch, consumer remote setup or stable Release publication was performed.
 

@@ -63,3 +63,9 @@ endforeach()
 install(FILES LICENSE SOURCE_PROVENANCE.md SOURCE_PROVENANCE.kos-calendar.md SOURCE_PROVENANCE.kos-calculator.md
     SOURCE_PROVENANCE.kos-weather.md THIRD_PARTY_NOTICES.weather.md
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/kos-apps)
+install(FILES shared/qml/controls/shaders/NOTICE.md
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/kos-apps RENAME SHADER_NOTICE.md)
+if("calendar" IN_LIST KOS_APPS OR "weather" IN_LIST KOS_APPS)
+    install(FILES shared/demo-ui/README.md
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/kos-apps RENAME DEMO_UI_NOTICE.md)
+endif()

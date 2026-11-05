@@ -61,6 +61,17 @@ class CandidateTest(unittest.TestCase):
         manifest = json.loads((ROOT / "packaging/flatpak/org.nextks.calendar.json").read_text())
         self.assertIs(manifest["separate-locales"], False)
 
+    def test_calendar_retains_upstream_license_directories(self):
+        manifest = json.loads((ROOT / "packaging/flatpak/org.nextks.calendar.json").read_text())
+        modules = {module["name"]: module for module in manifest["modules"]}
+        for name in ("libical", "kcalendarcore"):
+            with self.subTest(module=name):
+                self.assertIn(f"cp -a LICENSES /app/share/licenses/{name}/",
+                              modules[name]["post-install"])
+        self.assertIn(
+            "install -m644 LICENSE.txt COPYING.LESSER.txt 3RDPARTY.md CONTRIBUTORS.md README.md /app/share/licenses/libical/",
+            modules["libical"]["post-install"])
+
     def test_valid_candidate_is_copied_not_modified(self):
         self.assertEqual(self.import_candidate(), self.environment)
         self.assertTrue((self.work / "repo/config").is_file())

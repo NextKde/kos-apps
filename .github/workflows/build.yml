@@ -30,6 +30,10 @@ jobs:
           cmake -S . -B tmp/build -G Ninja -DKOS_APPS="$APP" -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/tmp/stage"
           cmake --build tmp/build --parallel 2
           cmake --install tmp/build
+          test -s tmp/stage/share/doc/kos-apps/SHADER_NOTICE.md
+          if [[ "$APP" == calendar || "$APP" == weather ]]; then
+            test -s tmp/stage/share/doc/kos-apps/DEMO_UI_NOTICE.md
+          fi
       - name: Run application regressions
         env:
           QT_QPA_PLATFORM: offscreen
