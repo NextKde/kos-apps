@@ -47,6 +47,19 @@ no signing secrets and does not install apps or publish Releases. A PR build is
 not a signed release, and its release date is only candidate metadata. Downloaded
 remote keys are inspection evidence, not automatic core trust-policy updates.
 
+For a separately reviewed successful CI candidate, extract its archive below this
+checkout's `tmp/`, then pass `--candidate tmp/<candidate>` and `--revision <full SHA>`
+to `prepare-bundle.py` with the normal signing/output/date arguments. This skips
+SDK provisioning and compilation. The source commit must be an ancestor of the
+clean helper checkout; VERSION and packaging are read at that exact commit.
+The importer rejects manifest/date/permission changes, missing Sources or foreign
+refs, malformed environment pins, symlinks and failed OSTree integrity checks.
+It signs a private working copy, retaining the original unsigned input and SDK
+evidence. These checks do not prove who built an arbitrary archive: verify the
+CI run, exact source and downloaded artifact before authorizing signing. No key
+is uploaded and no app is installed. Signing and artifact integrity do not replace
+isolated transaction, sandbox, source/license or graphical acceptance.
+
 The separate signed artifact workflow has one matrix job per app and a protected
 signing environment. A usable signing subkey must be provisioned separately;
 never commit a private key or infer trust from a public key beside a download.

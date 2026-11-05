@@ -102,6 +102,19 @@ jobs:
                   raise SystemExit(f'{role} changed during build')
           PY
           ostree --repo=tmp/sdk/repo refs > tmp/sdk/evidence/exported-refs.txt
+          python3 - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+          from types import SimpleNamespace
+          spec = importlib.util.spec_from_file_location('prepare_bundle', 'packaging/flatpak/prepare-bundle.py')
+          helper = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(helper)
+          work = Path('tmp/candidate-import')
+          work.mkdir()
+          helper.import_candidate(Path('tmp/sdk'), 'org.nextks.' + os.environ['APP'],
+              os.environ['SOURCE_REVISION'], SimpleNamespace(arch='x86_64', release_date=os.environ['RELEASE_DATE']), work)
+          PY
           tar -C tmp/sdk -czf "tmp/org.nextks.$APP-unsigned-sdk-x86_64.tar.gz" \
             repo evidence "org.nextks.$APP.json"
       - uses: actions/upload-artifact@v4

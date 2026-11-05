@@ -42,6 +42,43 @@ def build_environment(manifest, arch):
     return commits
 
 
+def candidate_manifest(app_id, revision, release_date):
+    source = run("git", "-C", str(ROOT), "show",
+                 f"{revision}:packaging/flatpak/{app_id}.json", capture=True)
+    manifest = json.loads(source)
+    manifest["modules"][-1]["sources"] = [{"type": "git", "url": REPOSITORY, "commit": revision}]
+    manifest["modules"][-1]["config-opts"].append(f"-DKOS_FLATPAK_RELEASE_DATE={release_date}")
+    return manifest
+
+
+def import_candidate(candidate, app_id, revision, args, work):
+    # Only explicitly reviewed CI artifacts are inputs; their contents do not
+    # establish publisher trust. Never mutate or sign the downloaded repository.
+    if any(path.is_symlink() for path in candidate.rglob("*")):
+        raise ValueError("Candidate must not contain symlinks")
+    manifest = json.loads((candidate / f"{app_id}.json").read_text())
+    if manifest != candidate_manifest(app_id, revision, args.release_date):
+        raise ValueError("Candidate manifest differs from the exact reviewed source/date")
+    environment = json.loads((candidate / "evidence/environment.json").read_text())
+    if set(environment) != {"runtime", "sdk"}:
+        raise ValueError("Candidate must record its runtime and SDK")
+    for role, entry in environment.items():
+        expected = f"{manifest[role]}/{args.arch}/{manifest['runtime-version']}"
+        if entry.get("ref") != expected or not re.fullmatch(r"[0-9a-f]{64}", entry.get("commit", "")):
+            raise ValueError(f"Invalid candidate {role} environment")
+    original = candidate / "repo"
+    refs = set(run("ostree", f"--repo={original}", "refs", capture=True).splitlines())
+    expected = {f"app/{app_id}/{args.arch}/stable",
+                f"runtime/{app_id}.Sources/{args.arch}/stable"}
+    if not expected <= refs or refs - expected - {f"runtime/{app_id}.Debug/{args.arch}/stable"}:
+        raise ValueError("Candidate contains missing or unexpected refs")
+    run("ostree", f"--repo={original}", "fsck")
+    shutil.copytree(original, work / "repo")
+    shutil.copytree(candidate / "evidence", work / "evidence")
+    (work / f"{app_id}.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    return environment
+
+
 def retain_sources(app_id, environment, work, artifacts, repo, version, revision, args, homedir):
     # Sources contains builder-managed module inputs, not the cleaned /app tree.
     source_id = app_id + ".Sources"
@@ -60,7 +97,11 @@ def retain_sources(app_id, environment, work, artifacts, repo, version, revision
     shutil.copyfile(work / f"{app_id}.json", artifacts / f"{app_id}.build-manifest.json")
     if (work / "source-inputs").exists():
         shutil.copytree(work / "source-inputs", artifacts / "source-inputs")
-    shutil.copyfile(work / "build/metadata", artifacts / f"{app_id}.flatpak-metadata.ini")
+    metadata = run("ostree", f"--repo={repo}", "cat",
+                   f"app/{app_id}/{args.arch}/stable", "/metadata", capture=True)
+    (artifacts / f"{app_id}.flatpak-metadata.ini").write_text(metadata + "\n")
+    if (work / "evidence").is_dir():
+        shutil.copytree(work / "evidence", artifacts / f"{app_id}.sdk-evidence")
     inventory = run("ostree", f"--repo={repo}", "ls", "-R",
                     f"app/{app_id}/{args.arch}/stable", capture=True)
     (artifacts / f"{app_id}.runtime-files.txt").write_text(inventory + "\n")
@@ -68,7 +109,9 @@ def retain_sources(app_id, environment, work, artifacts, repo, version, revision
         "schemaVersion": 1, "appId": app_id, "version": version, "revision": revision,
         "environment": environment,
         "tools": {tool: run(tool, "--version", capture=True)
-                  for tool in ("flatpak", "flatpak-builder", "ostree")},
+                  for tool in (("flatpak", "ostree") if args.candidate
+                               else ("flatpak", "flatpak-builder", "ostree"))},
+        "unsignedCandidate": bool(args.candidate),
         "sources": {"ref": source_ref, "commit": source_commit, "asset": source_asset},
         "reviewRequired": "Review source completeness, SDK/runtime source obligations, "
                           "linked component configuration and notices before publication."
@@ -103,9 +146,16 @@ def main():
     parser.add_argument("--fingerprint", required=True, help="Reviewed full primary signing-key fingerprint")
     parser.add_argument("--arch", choices=("x86_64", "aarch64"), default="x86_64")
     parser.add_argument("--release-date", required=True, help="YYYY-MM-DD for AppStream")
+    parser.add_argument("--candidate", type=Path, help="Extracted reviewed unsigned SDK candidate; skip building")
+    parser.add_argument("--revision", help="Full reviewed source commit, required with --candidate")
     args = parser.parse_args()
+    if bool(args.candidate) != bool(args.revision):
+        parser.error("--candidate and --revision must be supplied together")
+    if args.revision and not re.fullmatch(r"[0-9a-f]{40}", args.revision):
+        parser.error("Candidate revision must be a full lowercase commit SHA")
     app_id = "org.nextks." + args.app
-    for tool in ("git", "flatpak-builder", "flatpak", "ostree", "gpg"):
+    tools = ("git", "flatpak", "ostree", "gpg") + (() if args.candidate else ("flatpak-builder",))
+    for tool in tools:
         if not shutil.which(tool):
             parser.error(f"Required build tool is missing: {tool}")
     if not re.fullmatch(r"[0-9A-F]{40}(?:[0-9A-F]{24})?", args.fingerprint):
@@ -121,8 +171,9 @@ def main():
     # Publication builds must include the reviewed packaging work in the source pin.
     if run("git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=normal", capture=True):
         parser.error("Commit/review source and packaging first; the checkout must be clean")
-    revision = run("git", "-C", str(ROOT), "rev-parse", "HEAD", capture=True)
-    version = (ROOT / "VERSION").read_text().strip()
+    revision = args.revision or run("git", "-C", str(ROOT), "rev-parse", "HEAD", capture=True)
+    run("git", "-C", str(ROOT), "merge-base", "--is-ancestor", revision, "HEAD")
+    version = run("git", "-C", str(ROOT), "show", f"{revision}:VERSION", capture=True)
     if not re.fullmatch(r"[0-9a-f]{40}", revision) or not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
         parser.error("Expected an immutable commit and stable X.Y.Z VERSION")
     # A signing subkey may be used, but the configured identity must be its primary.
@@ -145,20 +196,23 @@ def main():
     artifacts = output / "artifacts"
     work.mkdir(mode=0o700)
     artifacts.mkdir(mode=0o700)
-    manifest = json.loads((ROOT / f"packaging/flatpak/{app_id}.json").read_text())
-    module = manifest["modules"][-1]
-    module["sources"] = [{"type": "git", "url": REPOSITORY, "commit": revision}]
-    module["config-opts"].append(f"-DKOS_FLATPAK_RELEASE_DATE={args.release_date}")
+    manifest = candidate_manifest(app_id, revision, args.release_date)
     build_manifest = work / f"{app_id}.json"
-    build_manifest.write_text(json.dumps(manifest, indent=2) + "\n")
     repo = work / "repo"
-    environment = build_environment(manifest, args.arch)
-    # Runtime/SDK must already be provisioned in the build environment. The builder
-    # may fetch the pinned source; it never installs the resulting application.
-    run("flatpak-builder", "--user", f"--arch={args.arch}", "--default-branch=stable", "--disable-rofiles-fuse", "--disable-tests", "--bundle-sources",
-        f"--state-dir={work / 'state'}", f"--repo={repo}", str(work / "build"), str(build_manifest))
-    if build_environment(manifest, args.arch) != environment:
-        raise ValueError("SDK/runtime changed during the build; rebuild before signing")
+    if args.candidate:
+        candidate = args.candidate.resolve()
+        if not candidate.is_relative_to(ROOT / "tmp") or not candidate.is_dir():
+            parser.error("Candidate must be an extracted directory below this checkout's tmp/")
+        environment = import_candidate(candidate, app_id, revision, args, work)
+    else:
+        build_manifest.write_text(json.dumps(manifest, indent=2) + "\n")
+        environment = build_environment(manifest, args.arch)
+        # Runtime/SDK must already be provisioned in the build environment. The builder
+        # may fetch the pinned source; it never installs the resulting application.
+        run("flatpak-builder", "--user", f"--arch={args.arch}", "--default-branch=stable", "--disable-rofiles-fuse", "--disable-tests", "--bundle-sources",
+            f"--state-dir={work / 'state'}", f"--repo={repo}", str(work / "build"), str(build_manifest))
+        if build_environment(manifest, args.arch) != environment:
+            raise ValueError("SDK/runtime changed during the build; rebuild before signing")
     run("flatpak", "build-sign", f"--arch={args.arch}", f"--gpg-homedir={homedir}",
         f"--gpg-sign={args.fingerprint}", str(repo), app_id, "stable")
     ref = f"app/{app_id}/{args.arch}/stable"
