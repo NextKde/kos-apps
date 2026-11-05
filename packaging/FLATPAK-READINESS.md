@@ -94,9 +94,22 @@ validate the exact committed core source independently.
 
 No verified hypervisor recovery point is available for the remote VMware desktop.
 Per the approved safety boundary, historical core install/upgrade, whole-NextKde
-uninstall, Plasma recovery and reinstall have not been performed. No runtimes or
-apps were launched during the isolated transactions; live Settings, portal,
-notification, widget and backend lifecycle acceptance remains open. No automatic
+uninstall, Plasma recovery and reinstall have not been performed. Subsequent
+runtime-ready isolated profiles completed genuine signed install/current-version
+check/network-failure/uninstall cycles for all three apps through the production
+backend and a process-local HTTPS fixture, not actual published Latest. Offscreen
+sandbox smoke launches exited zero; optional QML warnings remain, so this is not
+interactive desktop acceptance. External Flatpak removal/refresh/reinstall passed
+for Calculator and Weather before transaction supervision, and Calendar afterward.
+Core now supervises mutations in a bounded companion process because an observed
+upstream runtime-summary request omitted cancellation propagation. Four affected
+VM regressions pass (14.34s); subsequent Calendar and Calculator lifecycle runs
+cancelled during transaction waits and reconciled empty inventory/busy=false,
+not successful final installs. These core changes are committed as
+c35eabfc8f2da41141a0f3a371e46d47b47af002; its exact hosted Tests
+41974741788 and Nix 41974741789 are still running, not covered by the older green
+checks above. True newer-version production update, live Settings, portal,
+notification, widget and backend lifecycle acceptance remain open. No automatic
 profile migration, consumer remote setup, signing-workflow dispatch, PR merge or
 stable Release publication was performed.
 
