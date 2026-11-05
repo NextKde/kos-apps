@@ -40,7 +40,14 @@ not installed by Settings. They do not automatically satisfy external runtime/
 SDK corresponding-source obligations or prove aggregate license compliance;
 inspect actual source completeness, configuration, linking and notices manually.
 
-The manual artifact-only workflow has one matrix job per app and a protected
+`flatpak-sdk.yml` builds unsigned candidates on packaging pull requests or by
+manual dispatch. It retains the app/Sources OSTree repository, pinned manifest,
+SDK/runtime commits, and official build-remote metadata as CI artifacts. It has
+no signing secrets and does not install apps or publish Releases. A PR build is
+not a signed release, and its release date is only candidate metadata. Downloaded
+remote keys are inspection evidence, not automatic core trust-policy updates.
+
+The separate signed artifact workflow has one matrix job per app and a protected
 signing environment. A usable signing subkey must be provisioned separately;
 never commit a private key or infer trust from a public key beside a download.
 No signing or workflow execution is authorized merely by editing these files.
