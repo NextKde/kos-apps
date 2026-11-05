@@ -54,8 +54,10 @@ def candidate_manifest(app_id, revision, release_date):
 def import_candidate(candidate, app_id, revision, args, work):
     # Only explicitly reviewed CI artifacts are inputs; their contents do not
     # establish publisher trust. Never mutate or sign the downloaded repository.
-    if any(path.is_symlink() for path in candidate.rglob("*")):
-        raise ValueError("Candidate must not contain symlinks")
+    inputs = (candidate / "repo", candidate / "evidence", candidate / f"{app_id}.json")
+    for source in inputs:
+        if source.is_symlink() or any(path.is_symlink() for path in source.rglob("*")):
+            raise ValueError("Candidate inputs must not contain symlinks")
     manifest = json.loads((candidate / f"{app_id}.json").read_text())
     if manifest != candidate_manifest(app_id, revision, args.release_date):
         raise ValueError("Candidate manifest differs from the exact reviewed source/date")

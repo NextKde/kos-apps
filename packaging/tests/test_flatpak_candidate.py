@@ -70,6 +70,20 @@ class CandidateTest(unittest.TestCase):
             self.import_candidate()
         self.run.assert_not_called()
 
+    def test_unretained_build_tree_is_not_imported(self):
+        (self.candidate / "build").mkdir()
+        (self.candidate / "build/link").symlink_to(self.root)
+        self.assertEqual(self.import_candidate(), self.environment)
+        self.assertFalse((self.work / "build").exists())
+
+    def test_symlinked_input_directory_rejected(self):
+        (self.candidate / "repo/config").unlink()
+        (self.candidate / "repo").rmdir()
+        (self.candidate / "repo").symlink_to(self.root, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "symlinks"):
+            self.import_candidate()
+        self.run.assert_not_called()
+
     def test_manifest_changes_rejected(self):
         altered = dict(self.manifest, **{"finish-args": ["--filesystem=host"]})
         (self.candidate / f"{self.app_id}.json").write_text(json.dumps(altered))
