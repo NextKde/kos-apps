@@ -32,13 +32,17 @@ tests now run only in hosted CI or the dedicated VM.
 
 ## Outstanding signed-delivery gates
 
-Previous independent org.nextkde.* checkouts completed KDE 6.11 SDK builds and
-unsigned development bundles. That historical evidence does not validate the new
-org.nextks.* identities or consolidated source. The renamed SDK build, signed
-helper execution including Sources/provenance, source/license review and signed
-stable Release remain outstanding. Local signing resources exist, but no new-ID
-package was signed; consumer runtime trust provisioning remains incomplete.
-Source upload and green native CI are not an installable signed release.
+The exact consolidated source 03c92edd0b0c9f54013ba8c63ee1e591482eb928 completed
+all three new-ID KDE 6.11 app/Sources exports in
+[SDK run 41945820505](https://github.com/NextKde/kos-apps/actions/runs/41945820505).
+Both native push and PR validation also succeeded at that revision. These exports
+are unsigned candidates, not accepted production bundles. Separate candidate
+import/signing is being validated; genuine publisher signatures including retained
+Sources/provenance, source/license review and signed stable Release remain pending.
+Core 3079b238e43ffa68ecbca90676ba39c63af245c1 embeds the reviewed Flathub runtime-only
+URL/primary policy and passed its hosted gates. Users still configure their own
+runtime source; no consumer remote is added. Source upload, SDK exports and green
+native CI are not an installable signed release.
 
 Calendar retains scoped sandbox PIM/private storage, pre-store ownership locking
 and Background portal request/refusal/partial/timeout handling. Portal, closing,
@@ -58,7 +62,10 @@ migrates or removes retired org.nextkde.* refs automatically.
 
 The dedicated VM remains inaccessible over SSH; no successful VM sync/build/
 install/relogin/shot is recorded for this candidate. Core Settings/platform/widget
-regressions and the core trust update have not yet completed their own CI gates.
+regressions and the runtime-only trust update passed all jobs in
+[run 41947645841](https://github.com/NextKde/NextKde/actions/runs/41947645841),
+including 17/17 data/platform, 58/58 logic, 27/27 headless and 2/2 widget tests;
+both Nix configurations passed run 41947645918. This is not live VM acceptance.
 No real new-ID installation, data migration, graphical session, signing-workflow
 dispatch, consumer remote setup or stable Release publication was performed.
 
