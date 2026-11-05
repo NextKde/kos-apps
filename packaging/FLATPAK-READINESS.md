@@ -32,31 +32,42 @@ tests now run only in hosted CI or the dedicated VM.
 
 ## Outstanding signed-delivery gates
 
-The exact consolidated source ff5ed00f7d954d83c3e9621866f08153e372fd94 completed
-all three new-ID KDE 6.11 app/Sources exports and retained-candidate integrity checks
-in [SDK run 41951329778](https://github.com/NextKde/kos-apps/actions/runs/41951329778).
-[Native PR validation 41951329916](https://github.com/NextKde/kos-apps/actions/runs/41951329916)
-also passed: 63 Python cases (52 installer and 11 packaging), Calendar 12 CTests,
-Calculator 10 and Weather 10. Shared cases repeat across application jobs.
-Separately signed local app/Sources bundles, manifests, checksums and material
-archives were prepared from those three candidates with the existing publisher
-key; no private key was uploaded. They are not published or accepted final bundles.
+The exact consolidated source ee0175f4a6c2025a9c9ce5b6b8a6ba66e769cfba completed
+all three new-ID KDE 6.11 app/Sources exports and candidate integrity checks in
+[SDK run 41953958502](https://github.com/NextKde/kos-apps/actions/runs/41953958502).
+[Native PR validation 41953958540](https://github.com/NextKde/kos-apps/actions/runs/41953958540)
+and push validation 41953949348 passed: 64 Python cases (52 installer and 12
+packaging), Calendar 12 CTests, Calculator 10 and Weather 10. Shared cases repeat
+across application jobs. This revision retains Calendar's libical/KCalendarCore
+license texts and application shader/Demo UI provenance; older ff5ed00 candidates
+predate that correction and must not be published as final.
 
-Material inspection found Calendar's bundled libical/KCalendarCore libraries lacked
-their license-text directories in the runtime inventory. The current packaging
-retains those upstream texts/notices and installs application shader/Demo UI
-provenance. Native staging and SDK inventory gates check their presence. The
-ff5ed00 candidates predate this correction and must not be published as final;
-a matched-source set must be rebuilt, checked and signed after the fix passes.
-Full source/license review, final bundle/installed-commit verification, actual
-transactions and desktop acceptance still remain, as does a signed stable Release.
+All three corrected SDK candidates have separately signed app/Sources bundles,
+manifests, checksums and material archives prepared with the existing publisher
+key. Weather's recovered archive SHA256 matches the hosted artifact digest. VM
+verification passed signatures, retained hashes, exact source/version/ref/commit
+and absence of embedded online origins/runtime URLs. No private key was uploaded.
+Full source/license review and final accepted-source publication remain outstanding.
 
-Core d7075a1703967cce6613ff6f5c05264669eb389e embeds the reviewed Flathub runtime-only
-URL/primary policy and passed its hosted gates, including genuine publisher
-signature acceptance and tampering rejection through the production verifier.
-That public fixture is not final-bundle verification. Users still configure their
-own runtime source; no consumer remote is added. Source upload, SDK exports and
-green native CI are not an installable signed release.
+Core ffda70a2277e3aeca8bd19dd0ae276e3ab688488 passed
+[Tests 41960909858](https://github.com/NextKde/NextKde/actions/runs/41960909858)
+and [Nix 41960909783](https://github.com/NextKde/NextKde/actions/runs/41960909783).
+It embeds the reviewed runtime-only Flathub policy and guards bundle cleanup in an
+isolated bounded companion process before download. Unpatched libflatpak 1.16.6
+mis-releases retained GBytes as a GObject; upstream fix
+95b70b71e366c78d16abadaa7e33f6d6bcdc01f4 corrects that cleanup. The VM system
+package remains unpatched: production install/update safely reports
+FLATPAK_INCOMPATIBLE rather than exposing Settings to a crash. Users still configure
+their own runtime source; no consumer remote is added.
+
+With only a process-local upstream-corrected library in isolated VM profiles,
+all three signed candidates installed offline with dependencies disabled; production
+kos-apps verified their installed publisher signatures and exact commits, then
+uninstalled them and preserved private-data SHA256 sentinels. Calendar/Calculator
+also passed duplicate-install refusal and explicit same-bundle reinstall. Disabling
+origin verification on the Calculator fixture revoked update eligibility without
+blocking offline uninstall. These are not runtime, launch, true version-upgrade,
+Settings GUI or stable Release acceptance.
 
 Calendar retains scoped sandbox PIM/private storage, pre-store ownership locking
 and Background portal request/refusal/partial/timeout handling. Portal, closing,
@@ -74,13 +85,19 @@ conflicts, network failures and cancellation likewise need acceptance with
 disposable profiles. Normal removal preserves data/shared runtimes and never
 migrates or removes retired org.nextkde.* refs automatically.
 
-The dedicated VM remains inaccessible over SSH; no successful VM sync/build/
-install/relogin/shot is recorded for this candidate. Core Settings/platform/widget
-regressions and the runtime-only trust update passed all jobs in
-[run 41950649175](https://github.com/NextKde/NextKde/actions/runs/41950649175),
-including 17/17 data/platform, 58/58 logic, 27/27 headless and 2/2 widget tests;
-both Nix configurations passed run 41950649198. This is not live VM acceptance.
-No real new-ID installation, data migration, graphical session, signing-workflow
-dispatch, consumer remote setup or stable Release publication was performed.
+The dedicated VM is reachable again. Targeted kos-apps/kos-settings compilation,
+three affected Settings CTests and 23 core deployment/source-release regressions
+passed there; those local builds include unrelated working-tree changes and are
+not clean exact-core desktop acceptance. Original-library pre-download rejection
+and corrected-library normal cleanup were both exercised. Hosted checks above
+validate the exact committed core source independently.
+
+No verified hypervisor recovery point is available for the remote VMware desktop.
+Per the approved safety boundary, historical core install/upgrade, whole-NextKde
+uninstall, Plasma recovery and reinstall have not been performed. No runtimes or
+apps were launched during the isolated transactions; live Settings, portal,
+notification, widget and backend lifecycle acceptance remains open. No automatic
+profile migration, consumer remote setup, signing-workflow dispatch, PR merge or
+stable Release publication was performed.
 
 See flatpak/README.md and INSTALLATION.md for contracts and manual acceptance.
