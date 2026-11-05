@@ -28,7 +28,7 @@ manifests and `-DKOS_APPS=<app>` builds. Old `org.nextkde.Calendar`,
 refs: Settings reports RETIRED_FLATPAK_ID. No cross-identity profile copying is provided; exact user-ref
 removal is a separate confirmed action that keeps data and does not install a replacement. See
 [compatibility and manual transition](ProfileMigration.md) and [human acceptance](ProfileMigrationAcceptance.md).
-The old per-app repositories are being retired in favor of NextKde/kos-apps;
+The old per-app GitHub repositories were deleted in favor of NextKde/kos-apps;
 no renamed signed release is available yet. Old installer-owned source IDs/desktop
 links remain strictly recognized for offline status/uninstall.
 

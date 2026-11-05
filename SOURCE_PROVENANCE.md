@@ -14,9 +14,8 @@ retains Calculator and Weather commit ancestry using an explicit history-only
 ours merge; the subsequent consolidation commit imports their selected source
 files into the mappings below. The merge alone is not a source content merge.
 The original repository URLs above are historical provenance, not active download
-endpoints. Those temporary repositories are being retired with maintainer approval;
-their full refs and Release metadata/assets are backed up before deletion. Their
-commit ancestry remains part of this repository.
+endpoints. Those temporary GitHub repositories were deleted on 2026-11-05
+with maintainer approval. Their commit ancestry remains part of this repository.
 
 ## Path mapping and shared sources
 
@@ -58,5 +57,5 @@ actual validation results are recorded in packaging/FLATPAK-READINESS.md,
 not inferred from historical records.
 
 No private keys, credentials, real profiles or machine configuration are source
-inputs. No remote repository creation, package signing or release publication is
-performed by this consolidation.
+inputs. Source is published at https://github.com/NextKde/kos-apps; source upload
+and CI execution do not constitute signed-package release publication.

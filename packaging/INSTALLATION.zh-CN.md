@@ -25,7 +25,7 @@ Todo 已整合进 Calendar 的提醒事项视图，不再提供独立启动入�
 `org.nextkde.Weather` Flatpak 是不同的退役 ref；Settings 报 RETIRED_FLATPAK_ID，
 不提供跨身份资料复制；旧用户 ref 移除须单独确认，保留资料、不安装替代包；system／歧义安装交外部管理器。
 参见 [兼容与手动过渡说明](ProfileMigration.md) 和 [人工验收矩阵](ProfileMigrationAcceptance.md)。
-旧的三个单应用仓库退役，改用 NextKde/kos-apps；新身份的签名 Release 尚未发布。
+旧的三个单应用 GitHub 仓库已删除，改用 NextKde/kos-apps；新身份的签名 Release 尚未发布。
 旧源码所有权 ID／桌面链接仍严格识别，支持离线查看状态和卸载。
 
 ## 命令接口

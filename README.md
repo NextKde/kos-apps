@@ -65,9 +65,9 @@ Identity-bound read-only widget summaries are implemented; see
 profiles or transfer reminders. Do not run competing native PIM writers against
 the same storage.
 
-The three temporary per-app repositories are being retired in favor of this
-repository. Their Git ancestry and original notices are retained here; their
-original Release metadata/assets are backed up before deletion. See
+The three temporary per-app GitHub repositories were deleted on 2026-11-05
+with maintainer approval in favor of this repository. Their Git ancestry and
+original notices are retained here. See
 `SOURCE_PROVENANCE.md`, `LICENSE` and retained third-party/shader notices. No real profiles, credentials or machine settings
 belong in this repository. Runtime lifecycle, portal and update/uninstall behavior
 remain subject to manual acceptance using disposable profiles.
