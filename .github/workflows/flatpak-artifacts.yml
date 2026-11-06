@@ -1,8 +1,14 @@
 name: Prepare signed Flatpak artifacts
 
-# Manual, artifact-only preparation; no automated tests or application launch.
-# Creating a Release/uploading its assets remains a separate maintainer action.
+# Signed artifacts; no automated tests or application launch.
+# A VERSION change merged to main publishes a Release. Only apps whose build
+# inputs changed since the previous Release are rebuilt and re-signed; unchanged
+# apps are carried forward byte-for-byte, so Settings does not offer a phantom
+# update. Manual dispatch stays artifact-only and builds every app for review.
 on:
+  push:
+    branches: [main]
+    paths: [VERSION]
   workflow_dispatch:
     inputs:
       revision:
@@ -16,25 +22,90 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      apps: ${{ steps.detect.outputs.apps }}
+      previous: ${{ steps.detect.outputs.previous }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detect apps changed since the previous release
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apps='["calendar","calculator","weather"]'
+          previous="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && -n "$previous" ]]; then
+            if ! git rev-parse --verify --quiet "refs/tags/$previous^{commit}" >/dev/null; then
+              git fetch --quiet origin "refs/tags/$previous:refs/tags/$previous"
+            fi
+            mapfile -t changed < <(git diff --name-only "$previous^{commit}" "$GITHUB_SHA")
+            declare -A hit=([calendar]=0 [calculator]=0 [weather]=0)
+            shared=0
+            for path in "${changed[@]}"; do
+              case "$path" in
+                shared/*|cmake/*|CMakeLists.txt|packaging/flatpak/prepare-bundle.py|packaging/prepare-release.py)
+                  shared=1 ;;
+                services/pim-service/*) hit[calendar]=1 ;;
+                apps/org.nextks.calendar/*|packaging/flatpak/org.nextks.calendar.*) hit[calendar]=1 ;;
+                apps/org.nextks.calculator/*|packaging/flatpak/org.nextks.calculator.*) hit[calculator]=1 ;;
+                apps/org.nextks.weather/*|packaging/flatpak/org.nextks.weather.*) hit[weather]=1 ;;
+              esac
+            done
+            if [[ "$shared" -eq 1 ]]; then
+              hit=([calendar]=1 [calculator]=1 [weather]=1)
+            fi
+            selected=()
+            for app in calendar calculator weather; do
+              if [[ "${hit[$app]}" -eq 1 ]]; then
+                selected+=("$app")
+              fi
+            done
+            if [[ ${#selected[@]} -eq 0 ]]; then
+              apps='[]'
+            else
+              apps="$(printf '%s\n' "${selected[@]}" | jq -R . | jq -s -c .)"
+            fi
+            echo "Previous release: $previous"
+            echo "Changed apps: $apps"
+          fi
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+
   bundle:
+    needs: changes
+    if: needs.changes.outputs.apps != '[]'
     strategy:
       fail-fast: false
       matrix:
-        app: [calendar, calculator, weather]
+        app: ${{ fromJSON(needs.changes.outputs.apps) }}
     runs-on: ubuntu-24.04
     environment: flatpak-signing
     timeout-minutes: 60
+    env:
+      SOURCE_REVISION: ${{ inputs.revision || github.sha }}
     steps:
-      - name: Validate immutable input
+      - name: Resolve immutable inputs
         env:
-          SOURCE_REVISION: ${{ inputs.revision }}
-          RELEASE_DATE: ${{ inputs.release_date }}
+          REQUESTED_DATE: ${{ inputs.release_date }}
         run: |
+          set -euo pipefail
           [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$RELEASE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+          if [[ -n "$REQUESTED_DATE" ]]; then
+            release_date="$REQUESTED_DATE"
+          else
+            release_date="$(date -u +%F)"
+          fi
+          [[ "$release_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+          echo "RELEASE_DATE=$release_date" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.revision }}
+          ref: ${{ inputs.revision || github.sha }}
           persist-credentials: false
       - name: Provision build tools and runtime in the CI user only
         run: |
@@ -56,7 +127,6 @@ jobs:
       - name: Build and sign artifacts (no tests or application launch)
         env:
           SIGNING_FINGERPRINT: ${{ vars.FLATPAK_SIGNING_FINGERPRINT }}
-          RELEASE_DATE: ${{ inputs.release_date }}
         run: |
           python3 packaging/flatpak/prepare-bundle.py --app "${{ matrix.app }}" \
             --output tmp/flatpak-release \
@@ -74,3 +144,54 @@ jobs:
           path: tmp/flatpak-release/artifacts/
           if-no-files-found: error
           retention-days: 7
+
+  release:
+    if: github.event_name == 'push' && needs.changes.outputs.apps != '[]'
+    needs: [changes, bundle]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: org.nextks.*-flatpak-x86_64
+          path: dist
+          merge-multiple: true
+      - name: Carry forward unchanged app artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGED: ${{ needs.changes.outputs.apps }}
+          PREVIOUS: ${{ needs.changes.outputs.previous }}
+        run: |
+          set -euo pipefail
+          for app in calendar calculator weather; do
+            if jq -e --arg app "$app" 'index($app)' <<< "$CHANGED" >/dev/null; then
+              continue
+            fi
+            gh release download "$PREVIOUS" --repo "$GITHUB_REPOSITORY" --dir dist \
+              --pattern "org.nextks.$app*"
+            # A carried-forward artifact must still be installable; schema 1
+            # releases cannot produce an install plan.
+            jq -e '.schemaVersion == 2' "dist/org.nextks.$app.flatpak-release.json" >/dev/null
+          done
+      - name: Publish signed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGED: ${{ needs.changes.outputs.apps }}
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v$version already exists; nothing to publish."
+            exit 0
+          fi
+          rebuilt="$(jq -r 'join(", ")' <<< "$CHANGED")"
+          gh release create "v$version" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "KOS apps v$version" \
+            --notes "Signed Flatpak artifacts. Rebuilt in this release: $rebuilt. Other apps are carried forward unchanged from the previous release."
