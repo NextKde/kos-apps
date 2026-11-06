@@ -768,6 +768,30 @@ public:
                         if (metadata.value("calendars").isArray()) {
                             const auto defaults = calendars;
                             calendars = metadata.value("calendars").toArray();
+                            // Migrate colors from older palettes to the current
+                            // built-in palette; a user-picked color (customColor)
+                            // is always kept as is.
+                            QSet<QString> paletteColors;
+                            for (const auto &value : defaults)
+                                paletteColors.insert(value.toObject().value("color").toString());
+                            const auto migratedColor = [&defaults, &paletteColors](const QJsonObject &entry) {
+                                if (entry.value("customColor").toBool())
+                                    return entry.value("color").toString();
+                                const QString color = entry.value("color").toString();
+                                if (paletteColors.contains(color))
+                                    return color;
+                                for (const auto &value : defaults) {
+                                    if (value.toObject().value("id").toString()
+                                        == entry.value("id").toString())
+                                        return value.toObject().value("color").toString();
+                                }
+                                return defaults.first().toObject().value("color").toString();
+                            };
+                            for (qsizetype i = 0; i < calendars.size(); ++i) {
+                                auto entry = calendars.at(i).toObject();
+                                entry.insert("color", migratedColor(entry));
+                                calendars.replace(i, entry);
+                            }
                             if (calendarIndex("default") < 0) calendars.prepend(defaults.first());
                         }
                         if (!loadedLists.isEmpty())
@@ -2181,7 +2205,11 @@ QString PimStore::applyHolidayCalendar(const QJsonObject &descriptor, const QByt
     if (data.size() > maximumImportBytes) return errorResponse("file_too_large", "Calendar exceeds 20 MiB");
     KCalendarCore::MemoryCalendar::Ptr imported(new KCalendarCore::MemoryCalendar(d->calendar->timeZone()));
     KCalendarCore::ICalFormat format;
-    if (!format.fromString(imported, QString::fromUtf8(data)))
+    const QString text = QString::fromUtf8(data);
+    // Bail out before parsing so KCalendarCore does not log qCritical on garbage input.
+    if (!text.contains(QStringLiteral("BEGIN:VCALENDAR"), Qt::CaseInsensitive))
+        return errorResponse("invalid_icalendar", "Unable to parse iCalendar file");
+    if (!format.fromString(imported, text))
         return errorResponse("invalid_icalendar", "Unable to parse iCalendar file");
     const auto events = imported->rawEvents();
     if (events.isEmpty() || events.size() > 10000)
