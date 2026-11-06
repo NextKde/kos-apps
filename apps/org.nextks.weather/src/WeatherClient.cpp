@@ -69,33 +69,17 @@ QString serviceExecutable()
 WeatherClient::WeatherClient(QObject *parent)
     : QObject(parent)
 {
-    // Selection is frozen for this client lifetime. A core socket is opt-in;
-    // mere presence of a kos-data.sock file is not proof of compatibility.
 #ifdef KOS_WEATHER_SANDBOX
-    // A sandbox build never consumes an inherited host service override.
-    m_coreBackend = false;
+    m_snapshotDirectory = QDir(stateRoot()).filePath(QStringLiteral("quickshell/kos-weather/standalone-backend"));
+    const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("app/org.nextks.weather/backend"));
 #else
-    m_coreBackend = qEnvironmentVariableIsSet("KOS_DATA_SOCKET");
+    m_snapshotDirectory = QDir(stateRoot()).filePath(QStringLiteral("org.nextks.weather/standalone-backend"));
+    const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("org.nextks.weather-%1").arg(getuid()));
 #endif
-    m_snapshotDirectory = QDir(stateRoot()).filePath(m_coreBackend
-        ? QStringLiteral("quickshell/shell-data-service")
-        : QStringLiteral("quickshell/kos-weather/standalone-backend"));
     m_snapshotPath = QDir(m_snapshotDirectory).filePath(QStringLiteral("snapshot.json"));
-    if (m_coreBackend) {
-        m_socketPath = qEnvironmentVariable("KOS_DATA_SOCKET");
-        // An explicit custom socket has no implied core snapshot directory.
-        m_snapshotPath.clear();
-        m_snapshotDirectory.clear();
-    } else {
-#ifdef KOS_WEATHER_SANDBOX
-        const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("app/org.nextks.weather/backend"));
-#else
-        const auto runtime = QDir(runtimeRoot()).filePath(QStringLiteral("kos-weather-%1").arg(getuid()));
-#endif
-        QDir().mkpath(runtime);
-        QFile::setPermissions(runtime, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
-        m_socketPath = QDir(runtime).filePath(QStringLiteral("weather.sock"));
-    }
+    QDir().mkpath(runtime);
+    QFile::setPermissions(runtime, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    m_socketPath = QDir(runtime).filePath(QStringLiteral("weather.sock"));
     m_searchTimer.setSingleShot(true);
     m_searchTimer.setInterval(15000);
     connect(&m_searchTimer, &QTimer::timeout, this, [this] {
@@ -368,7 +352,7 @@ void WeatherClient::removeLocation(const QString &id)
 
 void WeatherClient::ensureServiceStarted()
 {
-    if (m_coreBackend || m_serviceStartAttempted
+    if (m_serviceStartAttempted
         || qEnvironmentVariableIsSet("KOS_WEATHER_DISABLE_SERVICE_AUTOSTART")) {
         return;
     }
@@ -605,9 +589,6 @@ void WeatherClient::applyWeather(const QJsonObject &weather)
 
 void WeatherClient::publishWidgetSnapshot(const QJsonObject &weather)
 {
-    // Do not republish a host override as the standalone app's private data.
-    if (m_coreBackend || m_snapshotDirectory.isEmpty())
-        return;
     const QString path = QDir(m_snapshotDirectory).filePath(QStringLiteral("widget-snapshot.json"));
     if (!QDir().mkpath(m_snapshotDirectory))
         return;

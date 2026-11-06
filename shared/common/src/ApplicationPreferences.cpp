@@ -39,8 +39,7 @@ bool environmentBool(const QString &value, bool fallback)
 
 ApplicationPreferences::ApplicationPreferences(QObject *parent)
     : QObject(parent)
-    , m_settings(std::make_unique<QSettings>(QStringLiteral("NextKde"),
-                                              QStringLiteral("KosApplications")))
+    , m_settings(std::make_unique<QSettings>())
 {
     initializeWatcher();
 }

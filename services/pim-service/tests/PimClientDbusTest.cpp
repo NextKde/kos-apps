@@ -38,7 +38,7 @@ void PimClientDbusTest::clientTracksRemoteService()
     QDBusConnectionInterface *busInterface = QDBusConnection::sessionBus().interface();
     QVERIFY(busInterface);
     QTRY_VERIFY_WITH_TIMEOUT(
-        busInterface->isServiceRegistered(QStringLiteral("org.nextkde.Kos.Pim1")).value(),
+        busInterface->isServiceRegistered(QStringLiteral("org.nextks.calendar.Pim")).value(),
         5000);
 
     PimClient client;

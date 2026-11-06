@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr auto serviceName = "org.nextkde.Kos.Pim1";
+constexpr auto serviceName = "org.nextks.calendar.Pim";
 constexpr auto objectPath = "/Pim";
 constexpr auto interfaceName = "org.nextkde.Kos.Pim1";
 

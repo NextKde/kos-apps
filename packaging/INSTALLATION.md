@@ -14,9 +14,9 @@ or executes a replacement installer.
 | `weather` | `NextKde/kos-apps` | `org.nextks.weather` | `kos-weather` |
 | `listenfree` | `NextKde/ListenFree` | `org.nextkde.ListenFree` | `listenfree` |
 
-Tasks are integrated in Calendar; no separate Todo entry is exposed. Legacy
-installer-owned `kos-todo` links remain recognized for offline removal and
-upgrade cleanup. Externally installed Todo files are never removed.
+Tasks are integrated in Calendar; no separate Todo entry is exposed. Current
+installers do not adopt old Todo ownership. Only the separate explicit core
+legacy purge handles verified old Calendar/Todo artifacts.
 
 New native desktop filenames are `org.nextks.<app>.desktop`; ListenFree retains
 `listenfree.desktop`. Executable names stay unchanged. No repository URL, executable
@@ -24,13 +24,15 @@ name, shell command or installation root is accepted from a store entry.
 
 The first three apps use one VERSION/commit/Release but separate packages, source
 manifests and `-DKOS_APPS=<app>` builds. Old `org.nextkde.Calendar`,
-`org.nextkde.Calculator` and `org.nextkde.Weather` Flatpaks are distinct retired
-refs: Settings reports RETIRED_FLATPAK_ID. No cross-identity profile copying is provided; exact user-ref
-removal is a separate confirmed action that keeps data and does not install a replacement. See
-[compatibility and manual transition](ProfileMigration.md) and [human acceptance](ProfileMigrationAcceptance.md).
+`org.nextkde.Calculator` and `org.nextkde.Weather` are separate old applications,
+not upgrade sources. New source ownership, Qt configuration and business storage
+use new identities; old profiles are not read, copied or merged. Settings only
+manages current IDs. The separate core tools/purge-legacy-apps.py explicitly
+removes verified old programs AND personal data, preview by default; unproven
+system/core files stay with their original manager. See
+[boundaries and cleanup](ProfileMigration.md) and [manual acceptance](ProfileMigrationAcceptance.md).
 The old per-app GitHub repositories were deleted in favor of NextKde/kos-apps;
-no renamed signed release is available yet. Old installer-owned source IDs/desktop
-links remain strictly recognized for offline status/uninstall.
+these breaking changes have not been published as a signed release.
 
 ## Command interface
 
@@ -73,7 +75,7 @@ record; earlier `type: "progress"` records are optional. Child output goes only
 to a mode-0600 log, never into this protocol.
 
 ```json
-{"schemaVersion":1,"appId":"org.nextks.calculator","action":"status","stage":"status","type":"result","success":true,"code":"INSTALLED","version":"0.1.0","revision":"0123456789012345678901234567890123456789","details":{"installed":true,"managed":true,"available":true,"version":"0.1.0","revision":"0123456789012345678901234567890123456789","currentVersion":"0.1.0","currentRevision":"0123456789012345678901234567890123456789","desktopFile":"/home/example/.local/share/applications/org.nextks.calculator.desktop","root":"/home/example/.local/share/nextkde-apps/calculator"}}
+{"schemaVersion":1,"appId":"org.nextks.calculator","action":"status","stage":"status","type":"result","success":true,"code":"INSTALLED","version":"0.1.0","revision":"0123456789012345678901234567890123456789","details":{"installed":true,"managed":true,"available":true,"version":"0.1.0","revision":"0123456789012345678901234567890123456789","currentVersion":"0.1.0","currentRevision":"0123456789012345678901234567890123456789","desktopFile":"/home/example/.local/share/applications/org.nextks.calculator.desktop","root":"/home/example/.local/share/nextkde-apps/org.nextks.calculator"}}
 ```
 
 `available` means the local allowlisted engine supports this app; it does not
@@ -135,6 +137,10 @@ sandboxed. Never install untrusted source by editing the allowlist.
 
 ## Storage, activation and ownership
 
+KEY is the full org.nextks.<app> identity for Calendar/Calculator/Weather, and
+listenfree for ListenFree. Old short-key roots are not adopted. Business/config
+paths and explicit legacy cleanup are listed in ProfileMigration.md.
+
 - `${XDG_DATA_HOME:-~/.local/share}/nextkde-apps/KEY/versions/REVISION/`
 - `.../KEY/current` — atomic symlink to the published immutable version
 - `.../KEY/ownership.json` — exact owned revision and activation link inventory
@@ -153,10 +159,10 @@ installer crash can bypass cleanup and leave a child build process running.
 
 Existing user desktop/bin/service files and distro/Nix activation entries are
 not overwritten. The installer checks executable PATH entries and system XDG
-desktop/D-Bus locations. Calendar's shared PIM service must use its immutable
+desktop/D-Bus locations. Calendar's PIM service must use its immutable
 owned executable directly, not a systemd unit that could activate a different
-installation. Existing core PIM service activation is a conflict, not a file to
-replace. Stop conflicting applications/services and resolve the package
+installation. Conflicting current service/command entries are never replaced;
+the old service name alone is no longer the same activation identity. Stop conflicting applications/services and resolve the package
 ownership manually before choosing an independent installation.
 
 A private `transaction.json` in the app state directory records the explicit

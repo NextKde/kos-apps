@@ -44,7 +44,7 @@ int run(int argc, char *argv[], const Metadata &metadata)
         application.installTranslator(&translator);
     else
         qWarning() << "Unable to load KOS translations:" << catalog;
-    application.setApplicationName(metadata.applicationName);
+    application.setApplicationName(metadata.desktopFileName);
     application.setApplicationDisplayName(metadata.displayName);
     application.setApplicationVersion(metadata.version);
     application.setDesktopFileName(metadata.desktopFileName);

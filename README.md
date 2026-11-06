@@ -46,20 +46,23 @@ No application data is deleted by normal uninstall.
 ## Compatibility and data
 
 `org.nextkde.Calendar`, `org.nextkde.Calculator` and `org.nextkde.Weather` Flatpaks
-are retired, distinct identities. There is no in-place Flatpak rename, automatic
-uninstall, adoption or migration of their private data. Settings detects them;
-no cross-identity profile import is provided. Exact-user-ref removal is a separate
-confirmed operation that keeps data and does not install a replacement. Keep the
-old installation until an acceptable replacement is ready. System/ambiguous refs
-stay with their external manager. See [compatibility](packaging/ProfileMigration.md).
+are retired, distinct applications. Breaking change is intentional: no in-place
+rename, source ownership adoption, old profile readback or migration. Settings
+only manages the new IDs. Explicit legacy cleanup (program AND personal data) is
+provided by NextKde core's tools/purge-legacy-apps.py, preview-only by default;
+unproven system/core ownership stays with its original manager. See
+[boundaries and cleanup](packaging/ProfileMigration.md).
 
-Native preference/data paths remain unchanged. Native Calendar retains the PIM
-bus `org.nextkde.Kos.Pim1`; sandbox Calendar uses `org.nextks.calendar.Pim` and
-private Flatpak storage, ignoring inherited host storage overrides. Background
-reminders require the desktop Background portal's permission. Existing ICS exchange
-is not a complete backup: it does not package metadata or image files, and sandbox
-file access still needs manual acceptance. The unpublished copier/finalizer has
-been withdrawn; unfinished development markers block opening a partial profile.
+Native source program/state roots and Qt preferences now use org.nextks.<app>.
+Native Calendar data is $XDG_DATA_HOME/org.nextks.calendar/pim; native and sandbox
+PIM both use org.nextks.calendar.Pim. Sandbox storage stays private and ignores
+inherited host storage overrides. Native Weather uses its own org.nextks.weather
+state/runtime namespace; both builds ignore KOS_DATA_SOCKET and only use the
+bundled helper. Background reminders require the desktop Background portal's
+permission. Existing ICS exchange is optional, not full-profile migration: it
+does not package metadata or images. Old development migration journals are
+neither read nor finalized. Current-ID updates and normal uninstalls retain
+current-ID data; this is unrelated to old-to-new migration.
 Identity-bound read-only widget summaries are implemented; see
 [the widget contract](packaging/WidgetIntegration.md). They do not synchronize
 profiles or transfer reminders. Do not run competing native PIM writers against

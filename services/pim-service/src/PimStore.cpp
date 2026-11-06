@@ -776,21 +776,6 @@ public:
                 }
             }
         }
-        // Upgrade untouched bundled categories only; user-edited names/colors stay intact.
-        const QHash<QString, QString> legacyColors{{"default", "#9B80C9"}, {"work", "#DA8A3A"},
-            {"personal", "#508BD6"}, {"family", "#57A878"}};
-        const QHash<QString, QString> presetColors{{"default", "#BF57DA"}, {"work", "#FB8208"},
-            {"personal", "#1D9BF6"}, {"family", "#56D72B"}};
-        for (qsizetype i = 0; i < calendars.size(); ++i) {
-            auto category = calendars[i].toObject();
-            const auto id = category.value("id").toString();
-            if (category.value("builtinName").toBool() && !category.value("customColor").toBool()
-                && legacyColors.contains(id)
-                && category.value("color").toString().compare(legacyColors.value(id), Qt::CaseInsensitive) == 0) {
-                category.insert("color", presetColors.value(id));
-                calendars.replace(i, category);
-            }
-        }
         if (!hasList(QStringLiteral("inbox")))
             lists.prepend(defaultLists().first());
 
@@ -834,9 +819,12 @@ QString PimStore::defaultStorageDirectory()
     const QString configured = qEnvironmentVariable("KOS_PIM_STORAGE_DIR");
     if (!configured.isEmpty())
         return configured;
-#endif
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
+        .filePath(QStringLiteral("org.nextks.calendar/pim"));
+#else
     return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation))
         .filePath(QStringLiteral("kos/pim"));
+#endif
 }
 
 PimStore::PimStore(const QString &storageDirectory, QObject *parent)
@@ -845,18 +833,6 @@ PimStore::PimStore(const QString &storageDirectory, QObject *parent)
 {
     d->q = this;
     d->load();
-    // Recover the single holiday category created by older versions only when
-    // it actually contains imported events. Fresh profiles start with no sources.
-    if (d->holidayIndex(QStringLiteral("holidays")) < 0) {
-        for (const auto &event : d->calendar->rawEvents()) {
-            if (event->customProperty(customApp, keyCalendarId) == QStringLiteral("holidays")) {
-                d->holidayCalendars.append(QJsonObject{{"id", "holidays"},
-                    {"name", "Imported holidays"}, {"type", "file"},
-                    {"enabled", true}, {"color", "#D95658"}});
-                break;
-            }
-        }
-    }
     d->holidayNetwork = new QNetworkAccessManager(this);
     auto *holidayTimer = new QTimer(this);
     holidayTimer->setInterval(60 * 60 * 1000);

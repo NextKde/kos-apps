@@ -5,7 +5,7 @@ PartOf=graphical-session.target
 
 [Service]
 Type=dbus
-BusName=org.nextkde.Kos.Pim1
+BusName=@KOS_PIM_BUS_NAME@
 ExecStart="@KOS_PIM_SERVICE_EXECUTABLE@"
 Restart=on-failure
 RestartSec=2

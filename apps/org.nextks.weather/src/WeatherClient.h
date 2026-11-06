@@ -100,7 +100,6 @@ private:
     QString m_snapshotDirectory;
     QString m_snapshotPath;
     QString m_socketPath;
-    bool m_coreBackend = false;
     QProcess m_service;
     QLocalSocket m_socket;
     QFileSystemWatcher m_watcher;

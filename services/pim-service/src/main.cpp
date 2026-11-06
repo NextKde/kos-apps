@@ -1,5 +1,4 @@
 #include "PimStore.h"
-#include <QFileInfo>
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -95,24 +94,13 @@ int main(int argc, char *argv[])
         qCritical() << "Unable to create PIM storage directory:" << storageDirectory;
         return 1;
     }
-    // Also arbitrate separate session buses using the same directory. Older
-    // native releases do not honor this lock; sandbox storage stays separate.
+    // Also arbitrate separate session buses using the same directory.
     QLockFile storageLock(QDir(storageDirectory).filePath(QStringLiteral("service.lock")));
     storageLock.setStaleLockTime(0);
     if (!storageLock.tryLock(0)) {
         qCritical() << "PIM storage is already in use or cannot be locked:" << storageDirectory
                     << storageLock.error();
         return 1;
-    }
-    // Do not open a partial profile left by the retired development copier.
-    for (const auto *name : {"migration-pending.json", "migration-finalize.json"}) {
-        const QFileInfo marker(QDir(storageDirectory).filePath(QString::fromLatin1(name)));
-        if (marker.exists() || marker.isSymLink()) {
-            qCritical() << "Unfinished development profile migration:" << marker.absoluteFilePath()
-                        << "Preserve the source, backups and journals for manual recovery."
-                        << "See the compatibility guide; do not delete markers to bypass this guard.";
-            return 1;
-        }
     }
     PimStore store(storageDirectory);
     if (!bus.registerObject(QStringLiteral("/Pim"), &store,

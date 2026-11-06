@@ -73,11 +73,18 @@ func run() error {
 	if err = syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
 		return fmt.Errorf("private helper is already active: %w", err)
 	}
-	s := &Service{statePath: filepath.Join(*stateDir, "state.json"), snapshotPath: filepath.Join(*stateDir, "snapshot.json"), weatherProvider: newOpenMeteoProvider(), subscribers: map[*subscriberConn]struct{}{}}
+	s := &Service{state: State{Weather: defaultWeatherState()}, statePath: filepath.Join(*stateDir, "state.json"), snapshotPath: filepath.Join(*stateDir, "snapshot.json"), weatherProvider: newOpenMeteoProvider(), subscribers: map[*subscriberConn]struct{}{}}
 	if raw, err := os.ReadFile(s.statePath); err == nil {
-		if err = json.Unmarshal(raw, &s.state); err != nil {
-			fmt.Fprintln(os.Stderr, "Ignoring invalid private cache:", err)
+		var saved State
+		if err = json.Unmarshal(raw, &saved); err != nil {
+			return fmt.Errorf("invalid private weather state (file preserved): %w", err)
 		}
+		if saved.Weather.SchemaVersion != weatherSchemaVersion || saved.Weather.Provider != weatherProviderName || saved.Weather.Locations == nil {
+			return errors.New("unsupported private weather state (file preserved); no legacy conversion is available")
+		}
+		s.state = saved
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("read private weather state: %w", err)
 	}
 	normalizeWeatherState(&s.state.Weather)
 	s.persist()

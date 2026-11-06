@@ -177,7 +177,7 @@ type OpenMeteoProvider struct {
 
 func defaultWeatherState() WeatherState {
 	location := WeatherLocation{
-		ID:          "legacy:changsha",
+		ID:          "manual:28.22820,112.93880",
 		Name:        "长沙",
 		Admin1:      "湖南",
 		Country:     "中国",
@@ -199,9 +199,8 @@ func defaultWeatherState() WeatherState {
 }
 
 func normalizeWeatherState(state *WeatherState) {
-	// An explicit empty list is a saved user choice, unlike a legacy missing list.
-	if state.SchemaVersion == weatherSchemaVersion && state.Locations != nil &&
-		len(state.Locations) == 0 && state.Location.ID == "" {
+	// An explicit empty list is a saved user choice.
+	if len(state.Locations) == 0 && state.Location.ID == "" {
 		units := state.Units
 		if units != weatherUnitsMetric && units != weatherUnitsImperial {
 			units = weatherUnitsMetric
@@ -210,12 +209,6 @@ func normalizeWeatherState(state *WeatherState) {
 			Units: units, Status: weatherStatusIdle, Locations: []WeatherLocation{},
 			Hourly: []WeatherHourlyPoint{}, Daily: []WeatherDay{}}
 		return
-	}
-	if state.SchemaVersion == 0 {
-		state.SchemaVersion = weatherSchemaVersion
-	}
-	if state.Provider == "" {
-		state.Provider = weatherProviderName
 	}
 	if state.Units != weatherUnitsMetric && state.Units != weatherUnitsImperial {
 		state.Units = weatherUnitsMetric

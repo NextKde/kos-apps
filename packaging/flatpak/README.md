@@ -70,22 +70,24 @@ No signing or workflow execution is authorized merely by editing these files.
 ## Identity and boundaries
 
 Native and sandbox desktop/AppStream IDs use `org.nextks.<app>`, retaining the
-`kos-<app>` command names. Native data remains at existing paths; old
-`org.nextkde.*` Flatpaks are distinct identities and are not silently adopted or
-migrated. Normal Flatpak uninstall preserves private data and shared runtimes.
+`kos-<app>` command names. Native programs, preferences and data now use new-ID
+namespaces too. Old org.nextkde.* applications are not adopted or migrated;
+legacy cleanup is a separate explicit core script that deletes listed old data.
+Normal current-ID Flatpak uninstall preserves private data and shared runtimes.
 
 Calendar alone builds libical/KCalendarCore and its PIM service. Sandbox client,
 service and activation use `org.nextks.calendar.Pim`, retaining the existing wire
 interface. It ignores inherited host PIM storage/executable overrides and uses
-private `$XDG_DATA_HOME/kos/pim`. Native PIM keeps `org.nextkde.Kos.Pim1`; competing
-old native writers are not protected by the new service's lock. Background
+private `$XDG_DATA_HOME/kos/pim`. Native PIM also uses `org.nextks.calendar.Pim`
+and its default data is `$XDG_DATA_HOME/org.nextks.calendar/pim`; no old profile is
+read. Explicit custom native profiles remain the caller's responsibility. Background
 reminders require explicit desktop portal permission. Denial/partial/timeout
 messages exist, but close/relogin/notification behavior needs manual acceptance.
 iCalendar import is not full-profile migration. Identity-bound read-only host
 widget summaries are implemented; see ../WidgetIntegration.md for their limited
 scope and pending sandbox/runtime acceptance.
 
-Weather runs its own Go helper, ignores inherited KOS_DATA_SOCKET in the sandbox,
+Weather runs its own Go helper, ignores inherited KOS_DATA_SOCKET in both builds,
 and uses an app-ID-scoped runtime socket. Calculator needs neither Go nor PIM.
 No broad host filesystem or unrestricted session bus access is added. Inspect
 final permissions: KDE 6.11 runtime may inherit read-only kdeglobals and scoped
