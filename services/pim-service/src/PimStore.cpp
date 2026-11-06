@@ -768,6 +768,30 @@ public:
                         if (metadata.value("calendars").isArray()) {
                             const auto defaults = calendars;
                             calendars = metadata.value("calendars").toArray();
+                            // Migrate colors from older palettes to the current
+                            // built-in palette; a user-picked color (customColor)
+                            // is always kept as is.
+                            QSet<QString> paletteColors;
+                            for (const auto &value : defaults)
+                                paletteColors.insert(value.toObject().value("color").toString());
+                            const auto migratedColor = [&defaults, &paletteColors](const QJsonObject &entry) {
+                                if (entry.value("customColor").toBool())
+                                    return entry.value("color").toString();
+                                const QString color = entry.value("color").toString();
+                                if (paletteColors.contains(color))
+                                    return color;
+                                for (const auto &value : defaults) {
+                                    if (value.toObject().value("id").toString()
+                                        == entry.value("id").toString())
+                                        return value.toObject().value("color").toString();
+                                }
+                                return defaults.first().toObject().value("color").toString();
+                            };
+                            for (qsizetype i = 0; i < calendars.size(); ++i) {
+                                auto entry = calendars.at(i).toObject();
+                                entry.insert("color", migratedColor(entry));
+                                calendars.replace(i, entry);
+                            }
                             if (calendarIndex("default") < 0) calendars.prepend(defaults.first());
                         }
                         if (!loadedLists.isEmpty())
