@@ -34,8 +34,8 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def bundle_installed_size(path):
-    """Read Flatpak's authoritative installed-size field from the bundle."""
+def bundle_metadata_and_size(path):
+    """Read exact metadata bytes and installed size through the consumer API."""
     flatpak_name = ctypes.util.find_library("flatpak")
     gio_name = ctypes.util.find_library("gio-2.0")
     gobject_name = ctypes.util.find_library("gobject-2.0")
@@ -52,6 +52,12 @@ def bundle_installed_size(path):
     flatpak.flatpak_bundle_ref_new.restype = ctypes.c_void_p
     flatpak.flatpak_bundle_ref_get_installed_size.argtypes = [ctypes.c_void_p]
     flatpak.flatpak_bundle_ref_get_installed_size.restype = ctypes.c_uint64
+    flatpak.flatpak_bundle_ref_get_metadata.argtypes = [ctypes.c_void_p]
+    flatpak.flatpak_bundle_ref_get_metadata.restype = ctypes.c_void_p
+    glib.g_bytes_get_data.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_size_t)]
+    glib.g_bytes_get_data.restype = ctypes.c_void_p
+    glib.g_bytes_unref.argtypes = [ctypes.c_void_p]
+    glib.g_bytes_unref.restype = None
     gobject.g_object_unref.argtypes = [ctypes.c_void_p]
     gobject.g_object_unref.restype = None
     glib.g_error_free.argtypes = [ctypes.c_void_p]
@@ -61,11 +67,22 @@ def bundle_installed_size(path):
         raise ValueError("Flatpak could not open the exported bundle")
     error = ctypes.c_void_p()
     bundle = flatpak.flatpak_bundle_ref_new(file, ctypes.byref(error))
+    metadata_bytes = None
     try:
         if not bundle:
             raise ValueError("Flatpak could not inspect the exported bundle")
-        return int(flatpak.flatpak_bundle_ref_get_installed_size(bundle))
+        metadata_bytes = flatpak.flatpak_bundle_ref_get_metadata(bundle)
+        if not metadata_bytes:
+            raise ValueError("Exported bundle has no application metadata")
+        length = ctypes.c_size_t()
+        data = glib.g_bytes_get_data(metadata_bytes, ctypes.byref(length))
+        if not data or not 0 < length.value <= 256 * 1024:
+            raise ValueError("Exported bundle metadata is empty or exceeds the signed plan limit")
+        metadata = ctypes.string_at(data, length.value)
+        return metadata, int(flatpak.flatpak_bundle_ref_get_installed_size(bundle))
     finally:
+        if metadata_bytes:
+            glib.g_bytes_unref(metadata_bytes)
         if bundle:
             gobject.g_object_unref(bundle)
         if file:
@@ -76,7 +93,11 @@ def bundle_installed_size(path):
 
 def metadata_plan(repo, app_id, arch):
     ref = f"app/{app_id}/{arch}/stable"
-    metadata = run("ostree", f"--repo={repo}", "cat", ref, "/metadata", capture=True).encode()
+    # This is a signed byte sequence, not a CLI token. Text-mode run() strips
+    # the terminal newline and would make every consumer's exact check fail.
+    metadata = subprocess.run(
+        ["ostree", f"--repo={repo}", "cat", ref, "/metadata"],
+        check=True, stdout=subprocess.PIPE).stdout
     if not metadata or len(metadata) > 256 * 1024:
         raise ValueError("Application metadata is missing or exceeds the signed plan limit")
     parser = __import__("configparser").ConfigParser(interpolation=None)
@@ -103,6 +124,18 @@ def metadata_plan(repo, app_id, arch):
         "runtime": {"ref": runtime_ref},
         "requiredExtensions": sorted(extensions, key=lambda item: item["ref"]),
     }
+
+
+def check_bundle_plan(bundle, plan):
+    """Refuse to sign a plan that the client's bundle API would reject."""
+    metadata, installed_size = bundle_metadata_and_size(bundle)
+    if metadata != plan["metadata"]:
+        raise ValueError("Exported bundle metadata differs from the repository plan; refusing to sign")
+    if hashlib.sha256(metadata).hexdigest() != plan["metadataSha256"]:
+        raise ValueError("Exported bundle metadata digest differs from the plan; refusing to sign")
+    if installed_size < 0 or installed_size > 2 * 1024 * 1024 * 1024:
+        raise ValueError("Flatpak bundle installed size is outside the signed plan limit")
+    return installed_size
 
 
 def build_environment(manifest, arch):
@@ -174,9 +207,8 @@ def retain_sources(app_id, environment, work, artifacts, repo, version, revision
     shutil.copyfile(work / f"{app_id}.json", artifacts / f"{app_id}.build-manifest.json")
     if (work / "source-inputs").exists():
         shutil.copytree(work / "source-inputs", artifacts / "source-inputs")
-    metadata = run("ostree", f"--repo={repo}", "cat",
-                   f"app/{app_id}/{args.arch}/stable", "/metadata", capture=True)
-    (artifacts / f"{app_id}.flatpak-metadata.ini").write_text(metadata + "\n")
+    metadata = metadata_plan(repo, app_id, args.arch)["metadata"]
+    (artifacts / f"{app_id}.flatpak-metadata.ini").write_bytes(metadata)
     if (work / "evidence").is_dir():
         shutil.copytree(work / "evidence", artifacts / f"{app_id}.sdk-evidence")
     inventory = run("ostree", f"--repo={repo}", "ls", "-R",
@@ -310,9 +342,7 @@ def main():
     plan = metadata_plan(repo, app_id, args.arch)
     # This is Flatpak's bundle-declared installed size, not the eventual disk
     # delta after shared OSTree objects and deduplication are accounted for.
-    installed_size = bundle_installed_size(bundle)
-    if installed_size < 0 or installed_size > 2 * 1024 * 1024 * 1024:
-        raise ValueError("Flatpak bundle installed size is outside the signed plan limit")
+    installed_size = check_bundle_plan(bundle, plan)
     release = {"schemaVersion": 2, "appId": app_id, "version": version, "revision": revision,
                "bundles": {args.arch: {"ref": ref, "commit": commit, "asset": asset,
                                        "size": size, "sha256": digest.hexdigest(),

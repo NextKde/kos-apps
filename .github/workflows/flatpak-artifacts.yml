@@ -1,6 +1,7 @@
 name: Prepare signed Flatpak artifacts
 
-# Signed artifacts; no automated tests or application launch.
+# Signed artifacts; plan regressions run before provisioning signing material.
+# No application is launched.
 # A VERSION change merged to main publishes a Release. Only apps whose build
 # inputs changed since the previous Release are rebuilt and re-signed; unchanged
 # apps are carried forward byte-for-byte, so Settings does not offer a phantom
@@ -107,6 +108,8 @@ jobs:
         with:
           ref: ${{ inputs.revision || github.sha }}
           persist-credentials: false
+      - name: Check signed-plan byte preservation
+        run: python3 packaging/flatpak/test_bundle_plan.py -v
       - name: Provision build tools and runtime in the CI user only
         run: |
           sudo apt-get update
