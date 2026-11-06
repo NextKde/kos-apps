@@ -2,9 +2,13 @@
 """Build signed application bundle artifacts locally; never install or publish them."""
 
 import argparse
+import base64
+import ctypes
+import ctypes.util
 from datetime import date
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -28,6 +32,77 @@ def sha256(path):
         while chunk := stream.read(128 * 1024):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def bundle_installed_size(path):
+    """Read Flatpak's authoritative installed-size field from the bundle."""
+    flatpak_name = ctypes.util.find_library("flatpak")
+    gio_name = ctypes.util.find_library("gio-2.0")
+    gobject_name = ctypes.util.find_library("gobject-2.0")
+    glib_name = ctypes.util.find_library("glib-2.0")
+    if not all((flatpak_name, gio_name, gobject_name, glib_name)):
+        raise ValueError("Flatpak and GLib libraries are required to read bundle installed size")
+    flatpak = ctypes.CDLL(flatpak_name)
+    gio = ctypes.CDLL(gio_name)
+    gobject = ctypes.CDLL(gobject_name)
+    glib = ctypes.CDLL(glib_name)
+    gio.g_file_new_for_path.argtypes = [ctypes.c_char_p]
+    gio.g_file_new_for_path.restype = ctypes.c_void_p
+    flatpak.flatpak_bundle_ref_new.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)]
+    flatpak.flatpak_bundle_ref_new.restype = ctypes.c_void_p
+    flatpak.flatpak_bundle_ref_get_installed_size.argtypes = [ctypes.c_void_p]
+    flatpak.flatpak_bundle_ref_get_installed_size.restype = ctypes.c_uint64
+    gobject.g_object_unref.argtypes = [ctypes.c_void_p]
+    gobject.g_object_unref.restype = None
+    glib.g_error_free.argtypes = [ctypes.c_void_p]
+    glib.g_error_free.restype = None
+    file = gio.g_file_new_for_path(os.fsencode(path))
+    if not file:
+        raise ValueError("Flatpak could not open the exported bundle")
+    error = ctypes.c_void_p()
+    bundle = flatpak.flatpak_bundle_ref_new(file, ctypes.byref(error))
+    try:
+        if not bundle:
+            raise ValueError("Flatpak could not inspect the exported bundle")
+        return int(flatpak.flatpak_bundle_ref_get_installed_size(bundle))
+    finally:
+        if bundle:
+            gobject.g_object_unref(bundle)
+        if file:
+            gobject.g_object_unref(file)
+        if error:
+            glib.g_error_free(error)
+
+
+def metadata_plan(repo, app_id, arch):
+    ref = f"app/{app_id}/{arch}/stable"
+    metadata = run("ostree", f"--repo={repo}", "cat", ref, "/metadata", capture=True).encode()
+    if not metadata or len(metadata) > 256 * 1024:
+        raise ValueError("Application metadata is missing or exceeds the signed plan limit")
+    parser = __import__("configparser").ConfigParser(interpolation=None)
+    parser.read_string(metadata.decode("utf-8"))
+    runtime = parser.get("Application", "runtime", fallback="")
+    if runtime.startswith("runtime/"):
+        runtime_ref = runtime
+    else:
+        runtime_ref = f"runtime/{runtime}"
+    if not re.fullmatch(r"runtime/[A-Za-z0-9.\\-]+/[A-Za-z0-9_\\-]+/[A-Za-z0-9_.\\-]+", runtime_ref):
+        raise ValueError("Application metadata has no valid runtime ref")
+    extensions = []
+    for section in parser.sections():
+        if not section.startswith("Extension ") or parser.getboolean(section, "autodelete", fallback=False):
+            continue
+        name = section.removeprefix("Extension ")
+        extension_ref = name if name.startswith("runtime/") else f"runtime/{name}/{arch}/stable"
+        if not re.fullmatch(r"runtime/[A-Za-z0-9.\\-]+/[A-Za-z0-9_\\-]+/[A-Za-z0-9_.\\-]+", extension_ref):
+            raise ValueError("Application metadata has an invalid required extension ref")
+        extensions.append({"ref": extension_ref})
+    return {
+        "metadata": metadata,
+        "metadataSha256": hashlib.sha256(metadata).hexdigest(),
+        "runtime": {"ref": runtime_ref},
+        "requiredExtensions": sorted(extensions, key=lambda item: item["ref"]),
+    }
 
 
 def build_environment(manifest, arch):
@@ -232,9 +307,20 @@ def main():
     with bundle.open("rb") as stream:
         while chunk := stream.read(128 * 1024):
             digest.update(chunk)
-    release = {"schemaVersion": 1, "appId": app_id, "version": version, "revision": revision,
+    plan = metadata_plan(repo, app_id, args.arch)
+    # This is Flatpak's bundle-declared installed size, not the eventual disk
+    # delta after shared OSTree objects and deduplication are accounted for.
+    installed_size = bundle_installed_size(bundle)
+    if installed_size < 0 or installed_size > 2 * 1024 * 1024 * 1024:
+        raise ValueError("Flatpak bundle installed size is outside the signed plan limit")
+    release = {"schemaVersion": 2, "appId": app_id, "version": version, "revision": revision,
                "bundles": {args.arch: {"ref": ref, "commit": commit, "asset": asset,
-                                       "size": size, "sha256": digest.hexdigest()}}}
+                                       "size": size, "sha256": digest.hexdigest(),
+                                       "metadata": base64.b64encode(plan["metadata"]).decode("ascii"),
+                                       "metadataSha256": plan["metadataSha256"],
+                                       "runtime": plan["runtime"],
+                                       "requiredExtensions": plan["requiredExtensions"],
+                                       "installedSize": installed_size}}}
     metadata = artifacts / f"{app_id}.flatpak-release.json"
     metadata.write_text(json.dumps(release, indent=2) + "\n")
     run("gpg", "--batch", "--homedir", str(homedir), "--local-user", args.fingerprint,
