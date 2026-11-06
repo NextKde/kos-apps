@@ -78,8 +78,35 @@ jobs:
           echo "apps=$apps" >> "$GITHUB_OUTPUT"
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
 
+  # Building or publishing signed Flatpaks must wait for passing tests on this commit.
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Wait for Build and test applications to succeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 80); do
+            json=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$GITHUB_SHA&per_page=100")
+            failed=$(echo "$json" | jq '[.workflow_runs[] | select(.path == ".github/workflows/build.yml" and .conclusion == "failure")] | length')
+            if [[ "$failed" != "0" ]]; then
+              echo "::error::Build and test applications failed for $GITHUB_SHA; refusing to build or publish Flatpaks."
+              exit 1
+            fi
+            done_ok=$(echo "$json" | jq '[.workflow_runs[] | select(.path == ".github/workflows/build.yml" and .conclusion == "success")] | length')
+            if [[ "$done_ok" != "0" ]]; then
+              echo "Tests green for $GITHUB_SHA."
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::Timed out waiting for Build and test applications for $GITHUB_SHA."
+          exit 1
+
   bundle:
-    needs: changes
+    needs: [changes, tests]
     if: needs.changes.outputs.apps != '[]'
     strategy:
       fail-fast: false
@@ -159,7 +186,7 @@ jobs:
 
   release:
     if: github.event_name == 'push' && needs.changes.outputs.apps != '[]'
-    needs: [changes, bundle]
+    needs: [changes, tests, bundle]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
