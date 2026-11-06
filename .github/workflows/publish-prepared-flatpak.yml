@@ -1,0 +1,72 @@
+name: Publish prepared Flatpak artifacts
+
+# Explicit publication of immutable artifacts from a successful protected
+# signing run. This never builds apps, imports keys or signs new content.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful main-branch Flatpak signing workflow run
+        required: true
+      source_revision:
+        description: Reviewed 40-character application source commit
+        required: true
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment: flatpak-signing
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_REVISION: ${{ inputs.source_revision }}
+      ARTIFACT_RUN: ${{ inputs.run_id }}
+    steps:
+      - name: Validate prepared signing run
+        run: |
+          set -euo pipefail
+          [[ "$ARTIFACT_RUN" =~ ^[0-9]+$ ]]
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ARTIFACT_RUN" \
+            --jq '{conclusion, head_branch, path}' > run.json
+          jq -e '.conclusion == "success" and .head_branch == "main" and .path == ".github/workflows/flatpak-artifacts.yml"' run.json
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+          pattern: org.nextks.*-flatpak-x86_64
+          path: dist
+          merge-multiple: true
+      - name: Check complete release and publish
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          for app in calendar calculator weather; do
+            id="org.nextks.$app"
+            jq -e --arg id "$id" --arg version "$version" --arg revision "$SOURCE_REVISION" \
+              '.schemaVersion == 2 and .appId == $id and .version == $version and .revision == $revision' \
+              "dist/$id.flatpak-release.json"
+            test -s "dist/$id.flatpak-release.json.sig"
+            test -s "dist/$id.SHA256SUMS.sig"
+            (cd dist && sha256sum -c "$id.SHA256SUMS")
+          done
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" --json isDraft,targetCommitish > release.json; then
+            # Resume only a matching unpublished draft, never overwrite a
+            # public release or a draft for different application source.
+            jq -e --arg revision "$SOURCE_REVISION" '.isDraft == true and .targetCommitish == $revision' release.json
+            gh release upload "v$version" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "v$version" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          else
+            gh release create "v$version" dist/* --repo "$GITHUB_REPOSITORY" \
+              --target "$SOURCE_REVISION" --title "KOS apps v$version" --latest \
+              --notes "Signed Calendar, Calculator and Weather artifacts from reviewed source $SOURCE_REVISION."
+          fi
