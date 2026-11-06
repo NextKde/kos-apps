@@ -2181,7 +2181,11 @@ QString PimStore::applyHolidayCalendar(const QJsonObject &descriptor, const QByt
     if (data.size() > maximumImportBytes) return errorResponse("file_too_large", "Calendar exceeds 20 MiB");
     KCalendarCore::MemoryCalendar::Ptr imported(new KCalendarCore::MemoryCalendar(d->calendar->timeZone()));
     KCalendarCore::ICalFormat format;
-    if (!format.fromString(imported, QString::fromUtf8(data)))
+    const QString text = QString::fromUtf8(data);
+    // Bail out before parsing so KCalendarCore does not log qCritical on garbage input.
+    if (!text.contains(QStringLiteral("BEGIN:VCALENDAR"), Qt::CaseInsensitive))
+        return errorResponse("invalid_icalendar", "Unable to parse iCalendar file");
+    if (!format.fromString(imported, text))
         return errorResponse("invalid_icalendar", "Unable to parse iCalendar file");
     const auto events = imported->rawEvents();
     if (events.isEmpty() || events.size() > 10000)
