@@ -24,7 +24,7 @@ one architecture's metadata with another's.
 A single stable `vX.Y.Z` release contains app-ID-prefixed files:
 
 - `<appId>-<version>-<arch>.flatpak`
-- `<appId>.flatpak-release.json` and `.sig` (client-facing, schema 1 unchanged)
+- `<appId>.flatpak-release.json` and `.sig` (client-facing, schema 2 with an exact installation plan)
 - `<appId>.app-release.json` (explicit source installer compatibility)
 - `<appId>.Sources-<version>-<arch>.flatpak` (signed source runtime bundle)
 - `<appId>-<revision>-source.tar.gz`
@@ -37,6 +37,16 @@ checksums/signature, but not itself. Every flat Release filename is app-specific
 Do not publish only the executable bundle. Source manifests hash GitHub codeload
 bytes of the exact same commit, not a potentially different local archive.
 SDK/runtime commits are recorded and changes during building are rejected.
+Application metadata is signed as the original binary byte sequence, including
+terminal newlines; never strip or normalize it. Before signing the release
+manifest, the helper reopens the final bundle through libflatpak, compares its
+metadata bytes and digest with the repository plan, and reads the installed size
+from that same bundle. A mismatch stops artifact preparation. Both SDK candidate
+and signed-artifact CI run `python3 packaging/flatpak/test_bundle_plan.py -v`
+before provisioning build tools or signing material. These regressions cover
+newlines/non-ASCII bytes and refusal of stripped metadata, wrong hashes and sizes.
+If a release was signed with different metadata bytes, publish a corrected new
+version after this gate passes; do not weaken the client's exact comparison.
 Sources are retained before runtime cleanup, are not app dependencies, and are
 not installed by Settings. They do not automatically satisfy external runtime/
 SDK corresponding-source obligations or prove aggregate license compliance;

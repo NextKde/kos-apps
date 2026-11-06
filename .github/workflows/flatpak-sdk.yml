@@ -37,6 +37,8 @@ jobs:
         with:
           ref: ${{ env.SOURCE_REVISION }}
           persist-credentials: false
+      - name: Check signed-plan byte preservation
+        run: python3 packaging/flatpak/test_bundle_plan.py -v
       - name: Provision disposable build environment
         run: |
           sudo apt-get update
