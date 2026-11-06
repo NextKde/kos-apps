@@ -111,12 +111,18 @@ jobs:
       - name: Check signed-plan byte preservation
         run: python3 packaging/flatpak/test_bundle_plan.py -v
       - name: Provision build tools and runtime in the CI user only
+        timeout-minutes: 25
         run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder ostree gnupg python3
+          set -euo pipefail
+          # The Azure mirror can transfer a single recommended multimedia
+          # dependency for many minutes. Use the official HTTPS archive and
+          # install only the tooling's actual dependencies in this CI runner.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          sudo timeout 5m apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          sudo timeout 10m apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install --no-install-recommends -y flatpak flatpak-builder ostree gnupg python3
           # Build dependencies only; no app source/remote is added to users' machines.
-          flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak --user install --noninteractive flathub org.kde.Sdk//6.11 org.kde.Platform//6.11
+          timeout 2m flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          timeout 15m flatpak --user install --noninteractive flathub org.kde.Sdk//6.11 org.kde.Platform//6.11
       - name: Import pre-provisioned signing key into a disposable private home
         env:
           SIGNING_KEY: ${{ secrets.FLATPAK_SIGNING_KEY }}
