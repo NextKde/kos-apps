@@ -106,6 +106,8 @@ jobs:
           ostree --repo=tmp/sdk/repo refs > tmp/sdk/evidence/exported-refs.txt
           ostree --repo=tmp/sdk/repo ls -R "app/org.nextks.$APP/x86_64/stable" \
             > tmp/sdk/evidence/runtime-files.txt
+          grep -Fq '/files/lib/qt6/qml/Kos/SurfaceShape/qmldir' tmp/sdk/evidence/runtime-files.txt
+          grep -Fq '/files/lib/qt6/qml/Kos/SurfaceShape/libkos_surface_shape.so' tmp/sdk/evidence/runtime-files.txt
           grep -Fq '/files/share/doc/kos-apps/SHADER_NOTICE.md' tmp/sdk/evidence/runtime-files.txt
           if [[ "$APP" == calendar || "$APP" == weather ]]; then
             grep -Fq '/files/share/doc/kos-apps/DEMO_UI_NOTICE.md' tmp/sdk/evidence/runtime-files.txt

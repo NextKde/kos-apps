@@ -396,56 +396,22 @@ KosApplicationWindow {
         }
     }
 
-    // --- window dots ---
-    // Red, amber, green in the window's top-right corner, at the calendar's
-    // own geometry (14px dots, 14 apart, 14.5 from the right edge, 10.5 from
-    // the top). They belong to the window frame rather than to the inset
-    // content, so they anchor to the window and read against the glass above
-    // the planes. The reference greys the third dot — zoom — out while the
-    // history column is open, so the zoom action is unavailable in that state.
-    Row {
+    // Reserve the actual button positions for KWin. Only the shared fallback
+    // draws on desktops that have not acknowledged cooperative takeover.
+    KosWindowControls {
         id: dots
-        anchors {
-            right: parent.right
-            rightMargin: 14.5
-            top: parent.top
-            topMargin: 10.5
-        }
+        targetWindow: root
+        maximizeMode: true
+        actions: ["close", "minimize", "maximize"]
+        circleSize: 14
+        buttonWidth: 14
+        buttonHeight: 14
         spacing: 14
+        anchors.right: parent.right
+        anchors.rightMargin: 14.5
+        anchors.top: parent.top
+        anchors.topMargin: 10.5
         z: 10
-
-        Repeater {
-            model: [
-                { tint: "#ff5f57", action: "close" },
-                { tint: "#febc2e", action: "minimise" },
-                { tint: "#28c840", action: "zoom" }
-            ]
-
-            delegate: Rectangle {
-                required property var modelData
-
-                width: 14
-                height: 14
-                radius: 7
-                color: modelData.action === "zoom" && root.historyVisible
-                    ? "#8e8e93" : modelData.tint
-                opacity: 0.9
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: !(modelData.action === "zoom" && root.historyVisible)
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        if (modelData.action === "close")
-                            root.close()
-                        else if (modelData.action === "minimise")
-                            root.showMinimized()
-                        else
-                            root.toggleFullScreen()
-                    }
-                }
-            }
-        }
     }
 
     // --- title-strip buttons ------------------------------------------
