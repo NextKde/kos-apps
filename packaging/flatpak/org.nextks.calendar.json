@@ -13,7 +13,8 @@
     "--device=dri",
     "--talk-name=org.freedesktop.Notifications",
     "--own-name=org.nextks.calendar.Pim",
-    "--env=QT_QPA_PLATFORMTHEME=xdgdesktopportal"
+    "--env=QT_QPA_PLATFORMTHEME=xdgdesktopportal",
+    "--env=QML_IMPORT_PATH=/app/lib/qt6/qml:/app/lib/qml"
   ],
   "modules": [
     {
@@ -77,6 +78,27 @@
           "type": "archive",
           "url": "https://download.kde.org/stable/frameworks/6.31/kcalendarcore-6.31.0.tar.xz",
           "sha256": "dd09650c406ef60ddb3e3fe55dd4faca819a500175197f88f8f2279ebb4fe16e"
+        }
+      ]
+    },
+    {
+      "name": "kos-surface-shape",
+      "buildsystem": "cmake-ninja",
+      "builddir": true,
+      "subdir": "shell/native/surface-shape",
+      "config-opts": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_INSTALL_LIBDIR=lib"
+      ],
+      "post-install": [
+        "install -Dm644 /run/build/kos-surface-shape/LICENSE /app/share/licenses/kos-surface-shape/LICENSE"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://github.com/NextKde/NextKde.git",
+          "commit": "d7b34a8e8b37a9fb7605333f10d02f7b16e70743",
+          "disable-submodules": true
         }
       ]
     },
