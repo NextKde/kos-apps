@@ -1,4 +1,5 @@
 import QtQuick
+import Kos.Icons as Symbols
 import QtQuick.Controls
 import Kos.Ui
 
@@ -38,14 +39,13 @@ MenuItem {
     contentItem: Item {
         implicitHeight: 38
 
-        Text {
+        Symbols.Icon {
             x: 6
             width: 20
             anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignHCenter
-            text: root.selected ? "✓" : ""
+            name: root.selected ? "checkmark" : ""
             color: root.colors.menuCheck
-            font.pixelSize: 12
+            size: 12
         }
 
         Item {

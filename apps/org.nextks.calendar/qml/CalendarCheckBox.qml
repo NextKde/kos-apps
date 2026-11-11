@@ -1,4 +1,5 @@
 import QtQuick
+import Kos.Icons as Symbols
 import QtQuick.Controls
 import Kos.Ui
 
@@ -20,12 +21,12 @@ CheckBox {
         color: control.checked ? (control.enabled ? control.accentColor : design.labelSecondary) : (control.roundIndicator ? "transparent" : (control.visualFocus || control.hovered ? design.selectionFill : design.controlFill))
         border.width: !control.checked && control.roundIndicator ? 1 : 0
         border.color: design.labelSecondary
-        Text {
+        Symbols.Icon {
             anchors.centerIn: parent
-            text: control.checkState === Qt.PartiallyChecked ? "−" : "✓"
+            name: control.checkState === Qt.PartiallyChecked ? "minus" : "checkmark"
             visible: control.checkState !== Qt.Unchecked
             color: "white"
-            font.pixelSize: 12
+            size: 12
         }
     }
     contentItem: Label {

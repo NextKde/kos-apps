@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Kos.Icons as Symbols
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
@@ -785,12 +786,11 @@ KosApplicationWindow {
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
 
-                Label {
+                Symbols.Icon {
                     anchors.centerIn: parent
-                    text: metric.symbol
+                    name: metric.symbol
                     color: root.skyTextMuted
-                    font.pixelSize: 17
-                    font.weight: Font.Normal
+                    size: 17
                     Accessible.ignored: true
                 }
             }
@@ -864,26 +864,12 @@ KosApplicationWindow {
             contentItem: RowLayout {
                 spacing: 9
                 opacity: removeCityAction.enabled ? 1 : 0.4
-                Canvas {
+                Symbols.Icon {
                     Layout.preferredWidth: 14
                     Layout.preferredHeight: 14
-                    onPaint: {
-                        const ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
-                        ctx.strokeStyle = "#E3E3E6"
-                        ctx.lineWidth = 1.1
-                        ctx.lineCap = "round"
-                        ctx.lineJoin = "round"
-                        ctx.beginPath()
-                        ctx.moveTo(2, 3.5); ctx.lineTo(12, 3.5)
-                        ctx.moveTo(5, 3.5); ctx.lineTo(5, 1.5)
-                        ctx.lineTo(9, 1.5); ctx.lineTo(9, 3.5)
-                        ctx.moveTo(3.5, 3.5); ctx.lineTo(4, 12)
-                        ctx.lineTo(10, 12); ctx.lineTo(10.5, 3.5)
-                        ctx.moveTo(6, 6); ctx.lineTo(6, 10)
-                        ctx.moveTo(8, 6); ctx.lineTo(8, 10)
-                        ctx.stroke()
-                    }
+                    name: "trash"
+                    color: "#E3E3E6"
+                    size: 14
                 }
                 Label {
                     Layout.fillWidth: true
@@ -1054,28 +1040,14 @@ KosApplicationWindow {
                                 color: "#AEAEB5"; font.pixelSize: 10; elide: Text.ElideRight
                             }
                         }
-                        Canvas {
+                        Symbols.Icon {
                             Layout.preferredWidth: 12
                             Layout.preferredHeight: 12
                             opacity: candidate.saved || candidate.emphasized ? 1 : 0
                             property bool saved: candidate.saved
-                            onSavedChanged: requestPaint()
-                            onPaint: {
-                                const ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                ctx.strokeStyle = "#B9B9BF"
-                                ctx.lineWidth = 1.2
-                                ctx.lineCap = "round"
-                                ctx.lineJoin = "round"
-                                ctx.beginPath()
-                                if (saved) {
-                                    ctx.moveTo(2, 6); ctx.lineTo(5, 9); ctx.lineTo(10, 3)
-                                } else {
-                                    ctx.moveTo(2, 6); ctx.lineTo(10, 6)
-                                    ctx.moveTo(6, 2); ctx.lineTo(6, 10)
-                                }
-                                ctx.stroke()
-                            }
+                            name: candidate.saved ? "checkmark" : "plus"
+                            color: "#B9B9BF"
+                            size: 12
                         }
                     }
                     ToolTip.visible: hovered
@@ -2414,47 +2386,20 @@ KosApplicationWindow {
                         width: 26; height: 26
                         padding: 0
                         visible: locationField.text.length > 0
-                        text: "×"
                         focusPolicy: Qt.NoFocus
                         Accessible.name: qsTr("Clear search")
                         background: Item {}
-                        contentItem: Label {
-                            text: "×"; color: root.searchFieldMutedInk
-                            horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                        }
+                        contentItem: Symbols.Icon { name: "xmark"; color: root.searchFieldMutedInk; size: 16 }
                         onClicked: { locationField.clear(); locationField.forceActiveFocus() }
                     }
 
-                    // 搜索放大镜：手绘确定性渲染，替代字体 ⌕ glyph（该字形
-                    // 在当前字体里 bbox 仅 6px 且贴基线，视觉过小）。
-                    // 手绘放大镜（参考图搜索胶囊左侧 magnifier；两笔确定性渲染，无字体依赖）
-                    Item {
+                    Symbols.Icon {
                         anchors.left: parent.left
                         anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 13
-                        height: 13
-                        Accessible.ignored: true
-                        Rectangle { // 镜片圆环
-                            width: 10
-                            height: 10
-                            radius: 5
-                            color: "transparent"
-                            // R144｜§2.6 小控件随背景翻转 + §2.10：胶囊底变亮后白描边笔画
-                            // 仅 2.4:1，改随底亮度自适应墨色（亮底黑@0.78 = 4.72:1）。
-                            border.color: root.searchFieldGlyphInk
-                            border.width: 1.4
-                        }
-                        Rectangle { // 手柄，45° 朝右下
-                            x: 8.4
-                            y: 8.4
-                            width: 1.4
-                            height: 5.2
-                            radius: 0.7
-                            color: root.searchFieldGlyphInk
-                            rotation: -45
-                            transformOrigin: Item.TopLeft
-                        }
+                        size: 13
+                        name: "search"
+                        color: root.searchFieldGlyphInk
                     }
                 }
 
@@ -2814,7 +2759,6 @@ KosApplicationWindow {
 
                     KosToolButton {
                         id: refreshButton
-                        text: "↻"
                         font.pixelSize: 18
                         Layout.preferredWidth: root.trayControlHeight
                         Layout.preferredHeight: root.trayControlHeight
@@ -2825,15 +2769,13 @@ KosApplicationWindow {
                             hovered: refreshButton.hovered
                             pressed: refreshButton.down
                         }
-                        contentItem: Label {
+                        contentItem: Symbols.Icon {
                             id: refreshGlyph
-                            text: refreshButton.text
-                            font: refreshButton.font
+                            name: "arrow_clockwise"
+                            size: 18
                             color: refreshButton.enabled
                                 ? root.sidebarControlInk
                                 : root.sidebarControlInkDisabled
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
                             RotationAnimation on rotation {
                                 running: backend.loading && !AppTheme.reduceMotion
                                 loops: Animation.Infinite
@@ -2967,7 +2909,7 @@ KosApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: !root.hasLocation
-                symbol: "☀"
+                symbol: "sun_max"
                 title: qsTr("No saved cities")
                 description: qsTr("Search for a city in the sidebar to add its forecast.")
                 actionText: qsTr("Add a city")
@@ -3171,30 +3113,12 @@ KosApplicationWindow {
                                     RowLayout {
                                         spacing: 6
 
-                                        Canvas {
+                                        Symbols.Icon {
                                             width: 12
                                             height: 12
-
-                                            onPaint: {
-                                                const ctx = getContext("2d")
-                                                ctx.clearRect(0, 0, width, height)
-                                                // ref-main.png 实测：AQ 卡头部点阵图标最亮点 (284,213)=(52,124,205) vs 卡面 (27,98,175)
-                                                // → 峰值 Δ≈+27；"AIR QUALITY" 文字最亮 (322,218)=(96,162,241) vs 同底 → Δ≈+66；
-                                                // 图标/文字对比度比 ≈ 0.38-0.41。且点阵亮度沿对角渐变：
-                                                // 右上 (row0,col2) 最亮、左下 (row2,col0) 最淡（视觉近消失）。
-                                                // 原统一 alpha 0.6 使 Δ≈+121 vs 文字 Δ≈+119（比 0.92），过亮且无渐隐；
-                                                // 现按对角渐隐：峰值 0.26×(255−背景)≈+47 ≈ 0.4× 文字 Δ。
-                                                for (let row = 0; row < 3; ++row) {
-                                                    for (let col = 0; col < 3; ++col) {
-                                                        // 亮度沿 col−row 对角：右上 (row0,col2)=0.26 最亮、左下 (row2,col0)=0.10 最淡
-                                                        const alpha = 0.10 + 0.16 * (col - row + 2) / 4
-                                                        ctx.fillStyle = Qt.rgba(1, 1, 1, alpha)
-                                                        ctx.beginPath()
-                                                        ctx.arc(1.5 + col * 4.5, 1.5 + row * 4.5, 1.3, 0, Math.PI * 2)
-                                                        ctx.fill()
-                                                    }
-                                                }
-                                            }
+                                            name: "circle_grid_3x3_fill"
+                                            color: Qt.rgba(1, 1, 1, 0.26)
+                                            size: 12
                                         }
 
                                         Label {
@@ -3317,7 +3241,7 @@ KosApplicationWindow {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         visible: !backend.ready
-                                        symbol: backend.loading ? "↻" : "☁"
+                                        symbol: backend.loading ? "arrow_clockwise" : "cloud"
                                         titleColor: root.skyText
                                         descriptionColor: root.skyTextMuted
                                         title: backend.loading
@@ -3394,11 +3318,10 @@ KosApplicationWindow {
                                                         anchors.topMargin: 12
                                                         spacing: 8
 
-                                                        Label {
-                                                            text: "≋"
+                                                        Symbols.Icon {
+                                                            name: "wind"
                                                             color: root.cardHeaderText
-                                                            font.pixelSize: 11
-                                                            font.weight: Font.Medium
+                                                            size: 11
                                                             Accessible.ignored: true
                                                         }
 
@@ -3560,7 +3483,7 @@ KosApplicationWindow {
 
                                                     onPhaseValChanged: {
                                                         moonCanvas.requestPaint()
-                                                        moonGlyphCanvas.requestPaint()
+
                                                     }
 
                                                     HoverHandler { id: moonHover }
@@ -3577,45 +3500,13 @@ KosApplicationWindow {
                                                         anchors.topMargin: 12
                                                         spacing: 8
 
-                                                        Canvas {
+                                                        Symbols.Icon {
                                                             id: moonGlyphCanvas
                                                             implicitWidth: 12
                                                             implicitHeight: 12
-                                                            antialiasing: true
-                                                            contextType: "2d"
-                                                            onPaint: {
-                                                                var ctx = getContext("2d")
-                                                                ctx.reset()
-                                                                var c = 6
-                                                                var r = 5
-                                                                // 暗面：整盘剪影（月亮相位剪影，同族白 0.14）
-                                                                ctx.beginPath()
-                                                                ctx.arc(c, c, r, 0, 2 * Math.PI)
-                                                                ctx.fillStyle = "rgba(255,255,255,0.14)"
-                                                                ctx.fill()
-                                                                if (!moonCard.hasPhase)
-                                                                    return
-                                                                // 亮面：外弧（盈月亮在右，亏月亮在左）+ 终止线半椭圆折线，一次成形
-                                                                var p = ((moonCard.phaseVal % 1) + 1) % 1
-                                                                var cosT = Math.cos(2 * Math.PI * p)
-                                                                var waxing = p < 0.5
-                                                                ctx.beginPath()
-                                                                if (waxing)
-                                                                    ctx.arc(c, c, r, -Math.PI / 2, Math.PI / 2, false)   // 顶极→底极经右侧
-                                                                else
-                                                                    ctx.arc(c, c, r, -Math.PI / 2, Math.PI / 2, true)    // 顶极→底极经左侧
-                                                                var steps = 32
-                                                                for (var i = 0; i <= steps; i++) {
-                                                                    var a = Math.PI / 2 - (Math.PI * i / steps)          // 底极→顶极
-                                                                    // 带符号 cosT：蛾眉凸向亮侧、凸月凸向暗侧（|cosT| 会把凸月画成蛾眉、满月退化成零面积）
-                                                                    var ex = waxing ? cosT * r * Math.cos(a) : -cosT * r * Math.cos(a)
-                                                                    ctx.lineTo(c + ex, c + r * Math.sin(a))
-                                                                }
-                                                                ctx.closePath()
-                                                                // ref tile-cards 月相卡头 glyph 峰值 (108,179,255)、同排头部文字 (113,183,255) 同浅蓝墨族 → 统一 #90cbff（与卡头标签/glyph 家族同墨，见 LEDGER 2026-10-18 hdrcol 轮）
-                                                                ctx.fillStyle = "#90cbff"
-                                                                ctx.fill()
-                                                            }
+                                                            name: "moon_fill"
+                                                            color: "#90cbff"
+                                                            size: 12
                                                         }
 
                                                         Label {
@@ -3797,47 +3688,16 @@ KosApplicationWindow {
                                                         anchors.topMargin: 12
                                                         spacing: 8
 
-                                                        Canvas {
+                                                        Symbols.Icon {
                                                             id: sunsetGlyphCanvas
                                                             implicitWidth: 12
                                                             implicitHeight: 12
-                                                            antialiasing: true
-                                                            contextType: "2d"
+
+
                                                             Accessible.ignored: true
-                                                            onPaint: {
-                                                                var ctx = getContext("2d")
-                                                                ctx.reset()
-                                                                // mini 日落 glyph（ref ~8px@814 → 12px）：地平线 + 上半圆太阳 + 下落箭头，同旧 46px sunCanvas 家族缩比（墨色 #90cbff，见下实测依据）
-                                                                ctx.strokeStyle = "#90cbff"
-                                                                ctx.lineWidth = 1.2
-                                                                ctx.beginPath()
-                                                                ctx.moveTo(0.5, 9)
-                                                                ctx.lineTo(11.5, 9)
-                                                                ctx.stroke()
-                                                                ctx.beginPath()
-                                                                ctx.arc(6, 9, 3.5, Math.PI, 2 * Math.PI, false)
-                                                                ctx.closePath()
-                                                                // ref-main.png (814×498) SUNSET glyph 区 (277,457,291,471) 峰值 (144,203,255)=#90cbff、
-                                                                // UV glyph 区 (400,457,414,471) 峰值 (142,202,255)；tile-cards.png 原生切片佐证
-                                                                // SUNSET (154,214,255) / UV (151,210,255)、头部文字峰值 (146,205,255) 与 glyph 同族 ——
-                                                                // 参考里 glyph 与头部文字同墨色（浅蓝 #90cbff 族），不是白。
-                                                                // 旧记载峰值 (224,240,255)/(239,251,255) 系误采样（混入邻近白色大数字墨），作废。
-                                                                ctx.fillStyle = "#90cbff"
-                                                                ctx.fill()
-                                                                ctx.strokeStyle = "#90cbff"
-                                                                ctx.fillStyle = "#90cbff"
-                                                                ctx.lineWidth = 1.2
-                                                                ctx.beginPath()
-                                                                ctx.moveTo(6, 2)
-                                                                ctx.lineTo(6, 4.5)
-                                                                ctx.stroke()
-                                                                ctx.beginPath()
-                                                                ctx.moveTo(6, 6)
-                                                                ctx.lineTo(4.4, 4.2)
-                                                                ctx.lineTo(7.6, 4.2)
-                                                                ctx.closePath()
-                                                                ctx.fill()
-                                                            }
+                                                            name: "sunset_fill"
+                                                            color: "#90cbff"
+                                                            size: 12
                                                         }
 
                                                         Label {
@@ -3892,33 +3752,16 @@ KosApplicationWindow {
                                                         anchors.topMargin: 12
                                                         spacing: 8
 
-                                                        Canvas {
+                                                        Symbols.Icon {
                                                             id: uvGlyphCanvas
                                                             implicitWidth: 12
                                                             implicitHeight: 12
-                                                            antialiasing: true
-                                                            contextType: "2d"
+
+
                                                             Accessible.ignored: true
-                                                            onPaint: {
-                                                                var ctx = getContext("2d")
-                                                                ctx.reset()
-                                                                // mini UV glyph（ref tile-cards ~14px@tile → 12px）：中心日盘 + 8 根射线
-                                                                ctx.strokeStyle = "#90cbff"
-                                                                ctx.lineWidth = 1.2
-                                                                for (var i = 0; i < 8; i++) {
-                                                                    var a = i * Math.PI / 4
-                                                                    ctx.beginPath()
-                                                                    ctx.moveTo(6 + Math.cos(a) * 3.2, 6 + Math.sin(a) * 3.2)
-                                                                    ctx.lineTo(6 + Math.cos(a) * 5.4, 6 + Math.sin(a) * 5.4)
-                                                                    ctx.stroke()
-                                                                }
-                                                                ctx.beginPath()
-                                                                ctx.arc(6, 6, 2, 0, 2 * Math.PI, false)
-                                                                ctx.closePath()
-                                                                // ref-main.png UV glyph 区 (400,457,414,471) 峰值 (142,202,255)，与 SUNSET 同浅蓝 #90cbff 单色墨（同族实测），非白
-                                                                ctx.fillStyle = "#90cbff"
-                                                                ctx.fill()
-                                                            }
+                                                            name: "sun_max_fill"
+                                                            color: "#90cbff"
+                                                            size: 12
                                                         }
 
                                                         Label {
@@ -3946,7 +3789,7 @@ KosApplicationWindow {
 
                                             WeatherMetric {
                                                 Layout.fillWidth: true
-                                                symbol: "%"
+                                                symbol: "drop_fill"
                                                 labelText: qsTr("Humidity")
                                                 valueText: Math.round(root.number(
                                                     backend.current, "relativeHumidity", 0)) + "%"
@@ -3954,7 +3797,7 @@ KosApplicationWindow {
 
                                             WeatherMetric {
                                                 Layout.fillWidth: true
-                                                symbol: "◷"
+                                                symbol: "clock"
                                                 labelText: qsTr("Observed")
                                                 valueText: root.localTime(root.value(
                                                     backend.current, "time", ""))
@@ -3962,7 +3805,7 @@ KosApplicationWindow {
 
                                             WeatherMetric {
                                                 Layout.fillWidth: true
-                                                symbol: "◉"
+                                                symbol: "eye"
                                                 labelText: qsTr("Visibility")
                                                 valueText: {
                                                     const meters = root.number(backend.current, "visibility", NaN)
@@ -3976,7 +3819,7 @@ KosApplicationWindow {
 
                                             WeatherMetric {
                                                 Layout.fillWidth: true
-                                                symbol: "◐"
+                                                symbol: "gauge"
                                                 labelText: qsTr("Pressure")
                                                 valueText: {
                                                     const hpa = root.number(backend.current, "pressure", NaN)
@@ -3986,7 +3829,7 @@ KosApplicationWindow {
 
                                             WeatherMetric {
                                                 Layout.fillWidth: true
-                                                symbol: "≈"
+                                                symbol: "thermometer"
                                                 labelText: qsTr("Feels Like")
                                                 valueText: {
                                                     const feels = root.number(backend.current, "apparentTemperature", NaN)
@@ -4105,44 +3948,14 @@ KosApplicationWindow {
                                                 // Control 会覆写 contentItem 几何，Canvas 需包 Item 再居中；segment 属于外层 hourlySegmented
                                                 contentItem: Item {
                                                     anchors.fill: parent
-                                                    Canvas {
+                                                    Symbols.Icon {
                                                         id: cloudSunCanvas
                                                         width: 20
                                                         height: 15
                                                         anchors.centerIn: parent
-                                                        antialiasing: true
-                                                        onPaint: {
-                                                            var ctx = getContext("2d")
-                                                            ctx.reset()
-                                                            // 日盘（右上探出）
-                                                            ctx.beginPath()
-                                                            ctx.arc(13.5, 4.5, 3.2, 0, 2 * Math.PI)
-                                                            ctx.fillStyle = hourlySegmented.segment === 0 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
-                                                            ctx.fill()
-                                                            // 云体：底边 y=14 平直，大鼓包 (6,10) r4.5、小鼓包 (11,10.5) r3.8，弧线顺滑闭合
-                                                            ctx.beginPath()
-                                                            ctx.moveTo(2.0, 14)
-                                                            ctx.lineTo(12.49, 14)
-                                                            ctx.arc(11, 10.5, 3.8, 1.168, -2.006, true)   // 右侧上行翻过小包顶
-                                                            ctx.arc(6, 10, 4.5, -0.716, 2.15, true)       // 越谷扫过大包顶到左侧
-                                                            ctx.quadraticCurveTo(2.0, 13.9, 2.0, 14)      // 左下角微圆收口
-                                                            ctx.closePath()
-                                                            // 缺口：沿云体路径 stroke 打孔（先于云体 fill，fill 会盖回内侧一半）
-                                                            ctx.globalCompositeOperation = "destination-out"
-                                                            ctx.strokeStyle = "#000000"
-                                                            ctx.lineWidth = 2.4
-                                                            ctx.lineCap = "round"
-                                                            ctx.lineJoin = "round"
-                                                            ctx.stroke()
-                                                            ctx.globalCompositeOperation = "source-over"
-                                                            ctx.fill()
-                                                        }
-                                                        Connections {
-                                                            target: hourlySegmented
-                                                            function onSegmentChanged() { cloudSunCanvas.requestPaint() }
-                                                        }
-                                                        Component.onCompleted: requestPaint()
-                                                        Accessible.ignored: true
+                                                        name: "cloud_sun_fill"
+                                                        color: hourlySegmented.segment === 0 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
+                                                        size: 15
                                                     }
                                                 }
                                                 onClicked: hourlySegmented.segment = 0
@@ -4167,32 +3980,14 @@ KosApplicationWindow {
                                                 // LEDGER 仍差 15：ref 水滴墨/胶囊高比 0.386，canvas 12×16→15×20（×1.25），墨迹 8×11→~10×14
                                                 contentItem: Item {
                                                     anchors.fill: parent
-                                                    Canvas {
+                                                    Symbols.Icon {
                                                         id: dropCanvas
                                                         width: 15
                                                         height: 20
                                                         anchors.centerIn: parent
-                                                        antialiasing: true
-                                                        onPaint: {
-                                                            var ctx = getContext("2d")
-                                                            ctx.reset()
-                                                            ctx.beginPath()
-                                                            ctx.moveTo(7.5, 1.9)
-                                                            ctx.bezierCurveTo(10.25, 6.25, 12.5, 9.5, 12.5, 13.1)  // 右侧下行到圆右端
-                                                            ctx.arc(7.5, 13.1, 5, 0, Math.PI, false)              // 经底部从右到左
-                                                            ctx.bezierCurveTo(2.5, 9.5, 4.75, 6.25, 7.5, 1.9)     // 左侧收回尖点
-                                                            ctx.closePath()
-                                                            ctx.fillStyle = hourlySegmented.segment === 1 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
-                                                            ctx.fill()
-                                                        }
-                                                        // segment 属于外层 hourlySegmented，Canvas 上无法直接写 onSegmentChanged
-                                                        //（qmllint: no matching signal，运行时不触发），改用 Connections 监听后重绘
-                                                        Connections {
-                                                            target: hourlySegmented
-                                                            function onSegmentChanged() { dropCanvas.requestPaint() }
-                                                        }
-                                                        Component.onCompleted: requestPaint()
-                                                        Accessible.ignored: true
+                                                        name: "drop_fill"
+                                                        color: hourlySegmented.segment === 1 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
+                                                        size: 15
                                                     }
                                                 }
                                                 onClicked: hourlySegmented.segment = 1
@@ -4215,40 +4010,14 @@ KosApplicationWindow {
                                                 // ref SF wind：三道横向流线，右端卷成小螺旋，整体重心居中
                                                 contentItem: Item {
                                                     anchors.fill: parent
-                                                    Canvas {
+                                                    Symbols.Icon {
                                                         id: windCanvas
                                                         width: 16
                                                         height: 13
                                                         anchors.centerIn: parent
-                                                        antialiasing: true
-                                                        onPaint: {
-                                                            var ctx = getContext("2d")
-                                                            ctx.reset()
-                                                            ctx.strokeStyle = hourlySegmented.segment === 2 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
-                                                            ctx.lineWidth = 1.8
-                                                            ctx.lineCap = "round"
-                                                            ctx.lineJoin = "round"
-                                                            ctx.beginPath()
-                                                            // 上线：右端 r2 向上卷
-                                                            ctx.moveTo(2.0, 3.4)
-                                                            ctx.quadraticCurveTo(6.0, 3.65, 10.0, 3.4)
-                                                            ctx.arc(10.0, 1.4, 2.0, Math.PI / 2, 0, true)
-                                                            // 中线：最长，右端 r2.4 卷
-                                                            ctx.moveTo(1.5, 7.2)
-                                                            ctx.quadraticCurveTo(6.5, 6.95, 12.3, 7.2)
-                                                            ctx.arc(12.3, 4.8, 2.4, Math.PI / 2, -0.4, true)
-                                                            // 下线：短，右端小卷
-                                                            ctx.moveTo(3.0, 11.2)
-                                                            ctx.quadraticCurveTo(5.5, 11.4, 8.0, 11.2)
-                                                            ctx.arc(8.0, 9.6, 1.6, Math.PI / 2, 0.3, true)
-                                                            ctx.stroke()
-                                                        }
-                                                        Connections {
-                                                            target: hourlySegmented
-                                                            function onSegmentChanged() { windCanvas.requestPaint() }
-                                                        }
-                                                        Component.onCompleted: requestPaint()
-                                                        Accessible.ignored: true
+                                                        name: "wind"
+                                                        color: hourlySegmented.segment === 2 ? "#ffffff" : Qt.rgba(1, 1, 1, 0.9)
+                                                        size: 13
                                                     }
                                                 }
                                                 onClicked: hourlySegmented.segment = 2
@@ -4682,37 +4451,13 @@ KosApplicationWindow {
                                         Layout.bottomMargin: 4
                                         visible: backend.daily.length > 0
 
-                                        Canvas {
+                                        Symbols.Icon {
                                             width: 12
                                             height: 12
                                             Accessible.ignored: true
-
-                                            onPaint: {
-                                                const ctx = getContext("2d")
-                                                ctx.clearRect(0, 0, width, height)
-                                                ctx.strokeStyle = root.skyTextMuted
-                                                ctx.lineWidth = 1.2
-                                                // 圆角方框（calendar 外形）：x1.5..10.5、y1.5..10.5，radius 3
-                                                ctx.beginPath()
-                                                ctx.moveTo(4.5, 1.5)
-                                                ctx.lineTo(7.5, 1.5)
-                                                ctx.arcTo(10.5, 1.5, 10.5, 4.5, 3)
-                                                ctx.lineTo(10.5, 7.5)
-                                                ctx.arcTo(10.5, 10.5, 7.5, 10.5, 3)
-                                                ctx.lineTo(4.5, 10.5)
-                                                ctx.arcTo(1.5, 10.5, 1.5, 7.5, 3)
-                                                ctx.lineTo(1.5, 4.5)
-                                                ctx.arcTo(1.5, 1.5, 4.5, 1.5, 3)
-                                                ctx.closePath()
-                                                ctx.stroke()
-                                                // 框内两条横线（calendar 行）：y=4.8 与 y=7.6，x 3.6..8.4
-                                                ctx.beginPath()
-                                                ctx.moveTo(3.6, 4.8)
-                                                ctx.lineTo(8.4, 4.8)
-                                                ctx.moveTo(3.6, 7.6)
-                                                ctx.lineTo(8.4, 7.6)
-                                                ctx.stroke()
-                                            }
+                                            name: "calendar"
+                                            color: root.skyTextMuted
+                                            size: 12
                                         }
 
                                         Label {
@@ -4729,7 +4474,7 @@ KosApplicationWindow {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 130
                                         visible: backend.daily.length === 0
-                                        symbol: "☂"
+                                        symbol: "umbrella"
                                         titleColor: root.skyText
                                         descriptionColor: root.skyTextMuted
                                         title: qsTr("Daily forecast unavailable")
