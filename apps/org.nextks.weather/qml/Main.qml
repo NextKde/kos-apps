@@ -2386,7 +2386,6 @@ KosApplicationWindow {
                         width: 26; height: 26
                         padding: 0
                         visible: locationField.text.length > 0
-                        text: "×"
                         focusPolicy: Qt.NoFocus
                         Accessible.name: qsTr("Clear search")
                         background: Item {}
@@ -2760,7 +2759,6 @@ KosApplicationWindow {
 
                     KosToolButton {
                         id: refreshButton
-                        text: "↻"
                         font.pixelSize: 18
                         Layout.preferredWidth: root.trayControlHeight
                         Layout.preferredHeight: root.trayControlHeight
@@ -2771,15 +2769,13 @@ KosApplicationWindow {
                             hovered: refreshButton.hovered
                             pressed: refreshButton.down
                         }
-                        contentItem: Label {
+                        contentItem: Symbols.Icon {
                             id: refreshGlyph
-                            text: refreshButton.text
-                            font: refreshButton.font
+                            name: "arrow_clockwise"
+                            size: 18
                             color: refreshButton.enabled
                                 ? root.sidebarControlInk
                                 : root.sidebarControlInkDisabled
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
                             RotationAnimation on rotation {
                                 running: backend.loading && !AppTheme.reduceMotion
                                 loops: Animation.Infinite
@@ -3245,7 +3241,7 @@ KosApplicationWindow {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         visible: !backend.ready
-                                        symbol: backend.loading ? "↻" : "☁"
+                                        symbol: backend.loading ? "arrow_clockwise" : "cloud"
                                         titleColor: root.skyText
                                         descriptionColor: root.skyTextMuted
                                         title: backend.loading
@@ -3322,11 +3318,10 @@ KosApplicationWindow {
                                                         anchors.topMargin: 12
                                                         spacing: 8
 
-                                                        Label {
-                                                            text: "≋"
+                                                        Symbols.Icon {
+                                                            name: "wind"
                                                             color: root.cardHeaderText
-                                                            font.pixelSize: 11
-                                                            font.weight: Font.Medium
+                                                            size: 11
                                                             Accessible.ignored: true
                                                         }
 
