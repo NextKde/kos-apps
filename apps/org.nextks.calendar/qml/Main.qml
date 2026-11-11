@@ -509,7 +509,7 @@ KosApplicationWindow {
         }
     }
 
-    // Compact 26px liquid toolbar action with a 16px vector icon.
+    // Shared liquid toolbar dimensions with a 16px vector icon.
     component ToolbarButton: Demo.LiquidActionButton {
         id: control
 
