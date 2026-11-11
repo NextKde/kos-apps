@@ -1,5 +1,6 @@
 import QtQuick
 import Kos.Ui
+import Kos.Demo as Demo
 
 // App-local layout contract, following nextkdeAppDemo GalleryDesign 2.9.
 // Compact geometry and liquid material are independent choices.
@@ -50,7 +51,7 @@ QtObject {
     readonly property int categoryHeadingBottom: 4
     readonly property int miniDisc: 18
     readonly property int toolbarHeight: 40
-    readonly property int toolbarButtonSize: 26
+    readonly property int toolbarButtonSize: Demo.LiquidStyle.toolbarButtonHeight
     readonly property int toolbarIconSize: 16
     readonly property int toolbarGap: 8
     readonly property int toolbarInsetLeft: 12
