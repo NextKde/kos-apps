@@ -27,9 +27,19 @@ Menu {
     modal: false
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    implicitWidth: Math.max(2 * cornerRadius + arrowWidth,
-        contentChildren.reduce((widest, item) => Math.max(widest, item.implicitWidth), 0)
-        + leftPadding + rightPadding)
+    implicitWidth: {
+        // Menu reparents its actions into the content view when opened. After
+        // that, contentChildren contains view internals, not the menu items.
+        // Use the stable menu model so font changes and reopening still measure
+        // the actual labels (including checkmarks and padding).
+        let widest = 0
+        for (let index = 0; index < count; ++index) {
+            const item = itemAt(index)
+            if (item) widest = Math.max(widest, item.implicitWidth)
+        }
+        return Math.max(2 * cornerRadius + arrowWidth,
+            widest + leftPadding + rightPadding)
+    }
     margins: 8
     padding: 6
     topPadding: padding + (arrowOnBottom ? 0 : effectiveArrowHeight)
