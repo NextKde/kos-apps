@@ -1,0 +1,6 @@
+{
+  "controls/LiquidPopover.qml": {
+    "sha256": "9411d441e35b6f5f242e83829300f94b9dc7f68cb807a892a0a9ace8f6138afc",
+    "reason": "Measure actual menu entries after Menu reparents them into its content view."
+  }
+}

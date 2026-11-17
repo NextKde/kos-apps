@@ -902,4 +902,87 @@
     <message><source>Add tags</source><translation>Add tags</translation></message>
     <message><source>Flag reminder</source><translation>Flag reminder</translation></message>
 </context>
+<context>
+    <name>CalendarSettingsDialog</name>
+    <message>
+      <source>Calendar settings</source>
+      <translation>Calendar settings</translation>
+    </message>
+    <message>
+      <source>Close settings</source>
+      <translation>Close settings</translation>
+    </message>
+    <message>
+      <source>Color scheme</source>
+      <translation>Color scheme</translation>
+    </message>
+    <message>
+      <source>Use the same light or dark appearance as the calendar.</source>
+      <translation>Use the same light or dark appearance as the calendar.</translation>
+    </message>
+    <message>
+      <source>System</source>
+      <translation>System</translation>
+    </message>
+    <message>
+      <source>Light</source>
+      <translation>Light</translation>
+    </message>
+    <message>
+      <source>Dark</source>
+      <translation>Dark</translation>
+    </message>
+    <message>
+      <source>Material</source>
+      <translation>Material</translation>
+    </message>
+    <message>
+      <source>Choose how floating panels blend with the calendar.</source>
+      <translation>Choose how floating panels blend with the calendar.</translation>
+    </message>
+    <message>
+      <source>Auto</source>
+      <translation>Auto</translation>
+    </message>
+    <message>
+      <source>Glass</source>
+      <translation>Glass</translation>
+    </message>
+    <message>
+      <source>Solid</source>
+      <translation>Solid</translation>
+    </message>
+    <message>
+      <source>Material opacity</source>
+      <translation>Material opacity</translation>
+    </message>
+    <message>
+      <source>Accessibility</source>
+      <translation>Accessibility</translation>
+    </message>
+    <message>
+      <source>Reduce transparency</source>
+      <translation>Reduce transparency</translation>
+    </message>
+    <message>
+      <source>Use solid surfaces for easier reading.</source>
+      <translation>Use solid surfaces for easier reading.</translation>
+    </message>
+    <message>
+      <source>Reduce motion</source>
+      <translation>Reduce motion</translation>
+    </message>
+    <message>
+      <source>Keep transitions simple and reduce movement.</source>
+      <translation>Keep transitions simple and reduce movement.</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>Restore defaults</translation>
+    </message>
+    <message>
+      <source>Done</source>
+      <translation>Done</translation>
+    </message>
+  </context>
 </TS>

@@ -19,6 +19,7 @@ kos_add_application(kos-calendar
         qml/CalendarToolTip.qml
         qml/CalendarPopupSurface.qml
         qml/CalendarStyle.qml
+        qml/CalendarSettingsDialog.qml
         qml/CalendarButton.qml
         qml/CalendarCheckBox.qml
         qml/CalendarTimeField.qml

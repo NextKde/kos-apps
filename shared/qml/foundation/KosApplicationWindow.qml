@@ -15,6 +15,7 @@ ApplicationWindow {
     // make compositor blur visually ineffective.
     color: modernDesign || AppTheme.glassActive ? "transparent" : AppTheme.window
     property var applicationSettings: null
+    property string accentNameOverride: ""
     property bool modernDesign: false
     property bool neutralTypography: false
     Binding { target: AppTheme; property: "neutralTypography"; value: root.neutralTypography }
@@ -76,8 +77,8 @@ ApplicationWindow {
     Binding {
         target: AppTheme
         property: "accentName"
-        value: root.applicationSettings
-            ? root.applicationSettings.accentName : "system"
+        value: root.accentNameOverride || (root.applicationSettings
+            ? root.applicationSettings.accentName : "system")
     }
     Binding {
         target: AppTheme

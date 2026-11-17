@@ -13,6 +13,7 @@ import Kos.Demo as Demo
 KosApplicationWindow {
     id: root
     neutralTypography: true
+    accentNameOverride: "blue"
     readonly property alias calendarScene: windowChrome
     readonly property alias pimStore: pim
 
@@ -1284,15 +1285,10 @@ KosApplicationWindow {
         onDeleteRequested: uid => pim.removeTodo(uid)
     }
 
-    KosSettingsDialog {
+    CalendarSettingsDialog {
         id: settingsDialog
         settings: root.applicationSettings
-        applicationName: qsTr("Calendar")
-        inWindowMaterials: true
-        inWindowSamplingAvailable: GraphicsInfo.api !== GraphicsInfo.Software
-        toolTipBackground: Component {
-            CalendarPopupSurface { scene: root.calendarScene; radius: 14; materialOpacity: 0.7 }
-        }
+        samplingAvailable: root.contentItem.GraphicsInfo.api !== GraphicsInfo.Software
     }
 
     Shortcut { sequences: [StandardKey.New]; onActivated: root.remindersMode ? root.openNewReminder(addButton) : root.beginEvent(root.selectedDate, undefined, addButton) }
