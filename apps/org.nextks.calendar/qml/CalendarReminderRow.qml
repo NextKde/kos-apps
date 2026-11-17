@@ -94,7 +94,7 @@ ItemDelegate {
                     padding: 0
                     text: row.todo.title
                     readOnly: row.saving
-                    font.pixelSize: 14
+                    font.pixelSize: AppTheme.fontSize(14)
                     font.underline: false
                     font.strikeout: row.todo.completed
                     color: row.todo.completed ? design.labelSecondary : design.labelPrimary
@@ -112,11 +112,11 @@ ItemDelegate {
                     visible: row.card && !row.editing && text.length > 0
                     text: [row.workspace.dueText(row.todo), row.workspace.canOrganize ? "" : row.workspace.listName(row.todo.listId), (row.todo.tags || []).map(tag => "#" + tag).join(" ")].filter(Boolean).join(" · ")
                     color: !row.todo.completed && row.todo.due && String(row.todo.due).slice(0,10) < row.workspace.today ? design.statusWarning : design.labelSecondary
-                    font.pixelSize: 11; elide: Text.ElideRight
+                    font.pixelSize: AppTheme.fontSize(11); elide: Text.ElideRight
                 }
-                Label { visible: row.card && !row.editing && Boolean(row.todo.description); text: String(row.todo.description || "").replace(/\n/g, " "); Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 11; color: design.labelSecondary }
+                Label { visible: row.card && !row.editing && Boolean(row.todo.description); text: String(row.todo.description || "").replace(/\n/g, " "); Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: AppTheme.fontSize(11); color: design.labelSecondary }
             }
-            Label { visible: row.showSupportingDetails && text.length > 0; text: row.workspace.priorityText(row.todo); color: design.statusWarning; font.pixelSize: 11 }
+            Label { visible: row.showSupportingDetails && text.length > 0; text: row.workspace.priorityText(row.todo); color: design.statusWarning; font.pixelSize: AppTheme.fontSize(11) }
             ToolButton {
                 visible: row.showSupportingDetails && Boolean(row.todo.flagged)
                 implicitWidth: 22; implicitHeight: 24; padding: 4
@@ -165,7 +165,7 @@ ItemDelegate {
                 implicitWidth: 24; implicitHeight: 24; padding: 3
                 opacity: row.hovered || row.editing || activeFocus ? 1 : 0.4
                 Accessible.name: qsTr("Reminder details")
-                contentItem: Label { text: "ⓘ"; font.pixelSize: 17; color: row.workspace.listColor(row.todo.listId); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                contentItem: Label { text: "ⓘ"; font.pixelSize: AppTheme.fontSize(17); color: row.workspace.listColor(row.todo.listId); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 background: Rectangle { radius: 12; color: details.hovered ? design.controlFill : "transparent" }
                 onClicked: { row.workspace.inlineFocusKey = ""; row.saveTitle(); row.workspace.editRequested(row.todo, details) }
             }

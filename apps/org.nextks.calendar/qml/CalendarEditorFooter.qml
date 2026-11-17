@@ -63,7 +63,7 @@ Item {
             width: confirmation.width - confirmation.leftPadding - confirmation.rightPadding
             text: footer.deleteMessage
             color: design.labelPrimary
-            font.pixelSize: 13
+            font.pixelSize: AppTheme.fontSize(13)
             wrapMode: Text.WordWrap
         }
         footer: Item {

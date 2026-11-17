@@ -32,7 +32,7 @@ Demo.LiquidDialog {
     header: Label {
         text: root.title
         color: design.labelPrimary
-        font.pixelSize: 17
+        font.pixelSize: AppTheme.fontSize(17)
         font.weight: Font.DemiBold
         padding: 16
         bottomPadding: 8
@@ -80,14 +80,14 @@ Demo.LiquidDialog {
             enabled: !root.saving
             RowLayout {
                 Layout.fillWidth: true
-                Label { text: qsTr("Source"); color: design.labelSecondary; font.pixelSize: 12 }
+                Label { text: qsTr("Source"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(12) }
                 Item { Layout.fillWidth: true }
                 SourceSelect { id: sourceSelect; objectName: "holidaySourceType"; model: [qsTr("Country or region"), qsTr("Custom")]; onCurrentIndexChanged: root.errorText = "" }
             }
             RowLayout {
                 Layout.fillWidth: true
                 visible: !root.customSource
-                Label { text: qsTr("Region"); color: design.labelSecondary; font.pixelSize: 12 }
+                Label { text: qsTr("Region"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(12) }
                 Item { Layout.fillWidth: true }
                 SourceSelect {
                     id: countrySelect
@@ -103,13 +103,13 @@ Demo.LiquidDialog {
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.customSource
-                Label { text: qsTr("Add using"); color: design.labelSecondary; font.pixelSize: 12 }
+                Label { text: qsTr("Add using"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(12) }
                 Item { Layout.fillWidth: true }
                 SourceSelect { id: customSelect; objectName: "holidayCustomType"; model: [qsTr("Subscription address"), qsTr("Local file")] }
             }
             RowLayout {
                 Layout.fillWidth: true
-                Label { text: qsTr("Name"); color: design.labelSecondary; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                Label { text: qsTr("Name"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(12); Layout.preferredWidth: 56 }
                 CalendarTextField {
                     id: nameField
                     objectName: "holidayCalendarName"
@@ -122,7 +122,7 @@ Demo.LiquidDialog {
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.customSource && !root.fromFile
-                Label { text: qsTr("Address"); color: design.labelSecondary; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                Label { text: qsTr("Address"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(12); Layout.preferredWidth: 56 }
                 CalendarTextField {
                     id: addressField
                     objectName: "holidaySubscriptionAddress"
@@ -139,7 +139,7 @@ Demo.LiquidDialog {
                     Layout.fillWidth: true
                     text: root.selectedPath.length ? decodeURIComponent(root.selectedPath.split("/").pop()) : qsTr("No file selected")
                     color: design.labelSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: AppTheme.fontSize(11)
                     elide: Text.ElideMiddle
                 }
                 CalendarButton { objectName: "chooseHolidayFile"; text: qsTr("Choose file…"); onClicked: fileDialog.open() }
@@ -149,7 +149,7 @@ Demo.LiquidDialog {
                 text: root.fromFile ? qsTr("Import holidays from an .ics file.")
                     : qsTr("Updates automatically each day. Saved holidays remain available offline.")
                 color: design.labelSecondary
-                font.pixelSize: 11
+                font.pixelSize: AppTheme.fontSize(11)
                 wrapMode: Text.WordWrap
             }
             Label {
@@ -157,14 +157,14 @@ Demo.LiquidDialog {
                 visible: !root.customSource && countrySelect.currentIndex > 0
                 text: qsTr("Source: Apple public holiday calendars")
                 color: design.labelSecondary
-                font.pixelSize: 10
+                font.pixelSize: AppTheme.fontSize(10)
             }
             Label {
                 Layout.fillWidth: true
                 visible: root.errorText.length > 0
                 text: root.errorText
                 color: design.statusWarning
-                font.pixelSize: 11
+                font.pixelSize: AppTheme.fontSize(11)
                 wrapMode: Text.WordWrap
             }
         }

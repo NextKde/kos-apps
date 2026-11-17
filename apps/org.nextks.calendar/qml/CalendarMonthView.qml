@@ -54,10 +54,10 @@ Pane {
         // height, the 24px date disc and the 18px chip (each +2 spacing).
         // Naming them keeps a change in one place from silently misaligning
         // the other two.
-        readonly property int headerHeight: 28
-        readonly property int dayDiscSize: 20
-        readonly property int dayHeaderHeight: 24
-        readonly property int chipHeight: 18
+        readonly property int headerHeight: AppTheme.textExtent(28)
+        readonly property int dayDiscSize: AppTheme.textExtent(20)
+        readonly property int dayHeaderHeight: AppTheme.textExtent(24)
+        readonly property int chipHeight: AppTheme.textExtent(18)
         readonly property real dayHeight: Math.max(0, (height - headerHeight - 6 * rowSpacing) / 6)
         columns: 7
         uniformCellWidths: true
@@ -78,7 +78,7 @@ Pane {
                 color: AppTheme.mutedText
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                font.pixelSize: 11
+                font.pixelSize: AppTheme.fontSize(11)
                 font.weight: Font.Normal
             }
         }
@@ -141,7 +141,7 @@ Pane {
                                 // P2-3a: today = white on todayRed, per reference
                                 // (3.91:1 deviation accepted by human review).
                                 color: dayButton.today ? "white" : AppTheme.text
-                                font.pixelSize: 11
+                                font.pixelSize: AppTheme.fontSize(11)
                                 font.weight: dayButton.today || dayButton.selected
                                     ? Font.DemiBold : Font.Normal
                             }
@@ -151,7 +151,7 @@ Pane {
                         Label {
                             text: "+" + (dayButton.dayItems.length - dayButton.visibleItemCount)
                             visible: dayButton.dayItems.length > dayButton.visibleItemCount
-                            color: AppTheme.mutedText; font.pixelSize: 10
+                            color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(10)
                             Accessible.name: qsTr("%1 items; select this date to view all").arg(dayButton.dayItems.length)
                         }
 
@@ -188,7 +188,7 @@ Pane {
                                 anchors.rightMargin: 4
                                 text: root.itemTitle(itemChip.modelData)
                                 color: AppTheme.text
-                                font.pixelSize: 10
+                                font.pixelSize: AppTheme.fontSize(10)
                                 font.strikeout: root.itemCompleted(itemChip.modelData)
                                 verticalAlignment: Text.AlignVCenter
                                 elide: Text.ElideRight

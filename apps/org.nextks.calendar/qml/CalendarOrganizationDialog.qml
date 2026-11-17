@@ -31,7 +31,7 @@ Demo.LiquidDialog {
         spacing: 12
         CalendarTextField { id: nameInput; objectName: "organizationName"; visible: !root.removing; Layout.fillWidth: true; maximumLength: 128; placeholderText: qsTr("Group name"); enabled: !root.saving; onAccepted: root.save() }
         Label { visible: root.removing; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: root.sectionMode ? qsTr("Remove “%1”? Its reminders will stay in this list without a section.").arg(nameInput.text) : qsTr("Remove “%1”? Its lists and reminders will be kept.").arg(nameInput.text); color: AppTheme.text }
-        Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.destructive; font.pixelSize: 12 }
+        Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.destructive; font.pixelSize: AppTheme.fontSize(12) }
     }
     function save() {
         if (saving || (!removing && !nameInput.text.trim())) return

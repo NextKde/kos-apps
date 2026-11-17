@@ -22,14 +22,14 @@ ColumnLayout {
         visible: root.sectionData.title.length > 0 || root.renaming
         Layout.preferredHeight: 34
         spacing: 4
-        Label { visible: !root.renaming; text: root.sectionData.title; Layout.fillWidth: true; elide: Text.ElideRight; color: design.labelPrimary; font.pixelSize: 15; font.weight: Font.Bold }
+        Label { visible: !root.renaming; text: root.sectionData.title; Layout.fillWidth: true; elide: Text.ElideRight; color: design.labelPrimary; font.pixelSize: AppTheme.fontSize(15); font.weight: Font.Bold }
         TextField {
             id: nameInput
             objectName: "sectionName_" + root.sectionData.id
             visible: root.renaming
             Layout.fillWidth: true
             text: root.sectionData.name
-            font.pixelSize: 15; font.weight: Font.Bold
+            font.pixelSize: AppTheme.fontSize(15); font.weight: Font.Bold
             color: design.labelPrimary
             padding: 0
             maximumLength: 128

@@ -11,7 +11,7 @@ CheckBox {
     implicitHeight: 28
     spacing: 8
     padding: 0
-    font.pixelSize: 13
+    font.pixelSize: AppTheme.fontSize(13)
     indicator: Rectangle {
         implicitWidth: control.roundIndicator ? 18 : 16
         implicitHeight: control.roundIndicator ? 18 : 16

@@ -17,6 +17,7 @@ class ApplicationPreferences final : public QObject
     Q_PROPERTY(QString appearanceMode READ appearanceMode WRITE setAppearanceMode NOTIFY preferencesChanged)
     Q_PROPERTY(QString materialMode READ materialMode WRITE setMaterialMode NOTIFY preferencesChanged)
     Q_PROPERTY(qreal materialOpacity READ materialOpacity WRITE setMaterialOpacity NOTIFY preferencesChanged)
+    Q_PROPERTY(QString textSize READ textSize WRITE setTextSize NOTIFY preferencesChanged)
     Q_PROPERTY(QString accentName READ accentName WRITE setAccentName NOTIFY preferencesChanged)
     Q_PROPERTY(bool reduceTransparency READ reduceTransparency WRITE setReduceTransparency NOTIFY preferencesChanged)
     Q_PROPERTY(bool reduceMotion READ reduceMotion WRITE setReduceMotion NOTIFY preferencesChanged)
@@ -32,6 +33,7 @@ public:
     QString appearanceMode() const;
     QString materialMode() const;
     qreal materialOpacity() const;
+    QString textSize() const;
     QString accentName() const;
     bool reduceTransparency() const;
     bool reduceMotion() const;
@@ -43,6 +45,7 @@ public:
     void setAppearanceMode(const QString &mode);
     void setMaterialMode(const QString &mode);
     void setMaterialOpacity(qreal opacity);
+    void setTextSize(const QString &size);
     void setAccentName(const QString &name);
     void setReduceTransparency(bool reduce);
     void setReduceMotion(bool reduce);

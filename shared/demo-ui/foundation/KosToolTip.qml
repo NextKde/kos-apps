@@ -52,7 +52,7 @@ Controls.ToolTip {
     padding: 5
     leftPadding: 10
     rightPadding: 10
-    font.pixelSize: 11
+    font.pixelSize: AppTheme.fontSize(11)
     font.weight: Font.Normal
     closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutsideParent
 

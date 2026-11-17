@@ -6,11 +6,11 @@ MenuItem {
     id: root
     property string iconName: ""
     property real iconStrokeWidth: 1.6
-    implicitHeight: 30
+    implicitHeight: Foundation.AppTheme.textExtent(30)
     implicitWidth: implicitContentWidth + leftPadding + rightPadding
     leftPadding: 8
     rightPadding: 8
-    font.pixelSize: 13
+    font.pixelSize: Foundation.AppTheme.fontSize(13)
     font.weight: Font.Normal
     indicator: null
     arrow: null

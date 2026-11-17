@@ -13,7 +13,7 @@ Item {
     readonly property string displayText: picker.labelAt(picker.currentIndex)
     signal activated(int index)
     implicitWidth: picker.implicitWidth
-    implicitHeight: 24
+    implicitHeight: AppTheme.textExtent(28)
     activeFocusOnTab: true
     onActiveFocusChanged: if (activeFocus) picker.forceActiveFocus()
     Demo.LiquidSelect {
@@ -30,7 +30,7 @@ Item {
         popupBorderWidth: 0
         popupShadowEnabled: true
         popupFontWeight: Font.Normal
-        implicitHeight: 24
+        implicitHeight: AppTheme.textExtent(28)
         onActivated: index => {
             currentIndex = index
             control.activated(index)

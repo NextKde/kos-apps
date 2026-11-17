@@ -7,7 +7,7 @@ KosDialog {
     background: KosSurface { radius: AppTheme.largeRadius; fillColor: AppTheme.windowRaised; elevation: 0.5 }
     header: Label {
         text: root.title; color: AppTheme.text
-        font.pixelSize: 20; font.weight: Font.DemiBold
+        font.pixelSize: AppTheme.fontSize(20); font.weight: Font.DemiBold
         padding: 22; bottomPadding: 12
         elide: Text.ElideRight
     }

@@ -7,6 +7,7 @@ import QtQuick.Effects
 
 SettingsTextField {
     id: control
+    function closePicker() { picker.close() }
     property var parseDate: function(value) { return Date.fromLocaleDateString(Qt.locale(), value, Locale.ShortFormat) }
     property var formatDate: function(value) { return Qt.formatDate(value, Locale.ShortFormat) }
     property var calendarLocale: Qt.locale()
@@ -77,7 +78,7 @@ SettingsTextField {
         id: picker
         parent: Overlay.overlay
         popupType: Popup.Item
-        width: Math.min(272, parent ? parent.width - 16 : 272)
+        width: Math.min(AppTheme.textExtent(272), parent ? parent.width - 16 : AppTheme.textExtent(272))
         height: contentItem.implicitHeight + topPadding + bottomPadding
         padding: 10
         focus: true
@@ -98,16 +99,16 @@ SettingsTextField {
             spacing: 6
             RowLayout {
                 Layout.fillWidth: true
-                ToolButton { text: "‹"; implicitWidth: 28; implicitHeight: 28; Accessible.name: qsTr("Previous month"); background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : "transparent" }
+                ToolButton { text: "‹"; implicitWidth: 28; implicitHeight: AppTheme.textExtent(30); Accessible.name: qsTr("Previous month"); background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : "transparent" }
                     contentItem: Symbols.Icon { name: parent.text === "‹" ? "chevron_left" : "chevron_right"; color: AppTheme.text; size: 18 }
                     onClicked: control.moveMonth(-1) }
                 Label {
                     Layout.fillWidth: true
                     text: control.calendarLocale.toString(control.displayedMonth, control.calendarLocale.name.indexOf("zh") === 0 ? "yyyy年M月" : "MMMM yyyy")
-                    color: AppTheme.text; font.pixelSize: 13; font.bold: true
+                    color: AppTheme.text; font.pixelSize: AppTheme.fontSize(13); font.bold: true
                     horizontalAlignment: Text.AlignHCenter
                 }
-                ToolButton { text: "›"; implicitWidth: 28; implicitHeight: 28; Accessible.name: qsTr("Next month"); background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : "transparent" }
+                ToolButton { text: "›"; implicitWidth: 28; implicitHeight: AppTheme.textExtent(30); Accessible.name: qsTr("Next month"); background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : "transparent" }
                     contentItem: Symbols.Icon { name: parent.text === "‹" ? "chevron_left" : "chevron_right"; color: AppTheme.text; size: 18 }
                     onClicked: control.moveMonth(1) }
             }
@@ -134,7 +135,7 @@ SettingsTextField {
                         required property int index
                         Layout.fillWidth: true
                         text: control.calendarLocale.standaloneDayName((dayGrid.firstDay + index) % 7 || 7, Locale.NarrowFormat)
-                        color: AppTheme.mutedText; font.pixelSize: 11
+                        color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(11)
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
@@ -142,10 +143,11 @@ SettingsTextField {
                     model: 42
                     Button {
                         id: day
+                        padding: 2
                         required property int index
                         readonly property date value: new Date(control.displayedMonth.getFullYear(), control.displayedMonth.getMonth(), index - dayGrid.offset + 1)
                         readonly property bool selected: control.sameDay(value, control.cursorDate)
-                        Layout.fillWidth: true; implicitWidth: 32; implicitHeight: 28
+                        Layout.fillWidth: true; implicitWidth: 32; implicitHeight: AppTheme.textExtent(30)
                         focusPolicy: Qt.NoFocus
                         Accessible.name: control.calendarLocale.toString(value, Locale.LongFormat)
                         Accessible.role: Accessible.Button
@@ -153,7 +155,7 @@ SettingsTextField {
                         contentItem: Label {
                             text: day.value.getDate()
                             color: day.selected ? "white" : day.value.getMonth() === control.displayedMonth.getMonth() ? AppTheme.text : AppTheme.mutedText
-                            font.pixelSize: 12
+                            font.pixelSize: AppTheme.fontSize(12)
                             font.bold: day.selected || control.sameDay(day.value, new Date())
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                         }
@@ -163,9 +165,9 @@ SettingsTextField {
                 }
             }
             Button {
-                Layout.fillWidth: true; implicitHeight: 28
+                Layout.fillWidth: true; implicitHeight: AppTheme.textExtent(30); padding: 2
                 text: qsTr("Today")
-                contentItem: Label { text: parent.text; color: AppTheme.text; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                contentItem: Label { text: parent.text; color: AppTheme.text; font.pixelSize: AppTheme.fontSize(12); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : AppTheme.controlBackground }
                 onClicked: control.selectDate(new Date())
             }

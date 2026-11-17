@@ -60,7 +60,7 @@ Demo.LiquidContentPopover {
 
     // The popup grows by 2 * shadowInset; contentItem is inset by
     // padding, so the content width stays 340 - 2 * 14 = 312.
-    width: 320 + 2 * shadowInset
+    width: Math.min(AppTheme.textExtent(320) + 2 * shadowInset, parent ? parent.width - 24 : 440)
     padding: 14 + shadowInset
     modal: false
     popupType: Popup.Item
@@ -88,12 +88,12 @@ Demo.LiquidContentPopover {
                 Layout.fillWidth: true
                 text: root.itemTitle
                 color: root.titleColor
-                font.pixelSize: 15
+                font.pixelSize: AppTheme.fontSize(15)
                 font.weight: Font.DemiBold
                 // 20px = 1.33em. The CJK fallback stack's natural line box is
                 // 1.47em (22px at 15px), which reads looser than macOS body text.
                 lineHeightMode: Text.FixedHeight
-                lineHeight: 20
+                lineHeight: AppTheme.textExtent(24)
                 wrapMode: Text.WordWrap
                 maximumLineCount: 3
                 elide: Text.ElideRight
@@ -134,13 +134,13 @@ Demo.LiquidContentPopover {
             Layout.fillWidth: true
             text: root.itemCategory
             color: root.secondaryColor
-            font.pixelSize: 11
+            font.pixelSize: AppTheme.fontSize(11)
         }
         Label {
             Layout.fillWidth: true
             text: root.itemSchedule
             color: root.secondaryColor
-            font.pixelSize: 11
+            font.pixelSize: AppTheme.fontSize(11)
             wrapMode: Text.Wrap
         }
 
@@ -149,7 +149,7 @@ Demo.LiquidContentPopover {
             Layout.fillWidth: true
             text: root.itemTime
             color: root.secondaryColor
-            font.pixelSize: 13
+            font.pixelSize: AppTheme.fontSize(13)
             wrapMode: Text.WordWrap
             visible: root.itemTime.length > 0
         }
@@ -159,7 +159,7 @@ Demo.LiquidContentPopover {
             Layout.fillWidth: true
             text: root.itemLocation
             color: root.secondaryColor
-            font.pixelSize: 13
+            font.pixelSize: AppTheme.fontSize(13)
             wrapMode: Text.Wrap
             visible: root.itemLocation.length > 0
         }
@@ -168,7 +168,7 @@ Demo.LiquidContentPopover {
             Layout.fillWidth: true
             visible: root.itemTags.length > 0
             text: root.itemTags.map(tag => "#" + tag).join(" ")
-            color: root.secondaryColor; font.pixelSize: 11; wrapMode: Text.Wrap
+            color: root.secondaryColor; font.pixelSize: AppTheme.fontSize(11); wrapMode: Text.Wrap
         }
         CalendarButton {
             Layout.fillWidth: true
@@ -194,7 +194,7 @@ Demo.LiquidContentPopover {
                 width: root.availableWidth - 2 * 14
                 text: root.itemNotes
                 color: root.secondaryColor
-                font.pixelSize: 13
+                font.pixelSize: AppTheme.fontSize(13)
                 wrapMode: Text.Wrap
             }
         }

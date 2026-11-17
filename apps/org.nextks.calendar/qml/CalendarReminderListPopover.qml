@@ -71,7 +71,7 @@ Demo.LiquidContentPopover {
         width: formScroll.availableWidth
         enabled: !root.saving
         spacing: 8
-        Label { text: root.editingId ? qsTr("Edit list") : qsTr("New list"); font.pixelSize: 15; font.weight: Font.DemiBold; color: AppTheme.text }
+        Label { text: root.editingId ? qsTr("Edit list") : qsTr("New list"); font.pixelSize: AppTheme.fontSize(15); font.weight: Font.DemiBold; color: AppTheme.text }
         CalendarTextField { id: nameField; objectName: "reminderListName"; Layout.fillWidth: true; maximumLength: 128; placeholderText: qsTr("List name"); onAccepted: root.accept() }
         RowLayout {
             Layout.fillWidth: true
@@ -83,7 +83,7 @@ Demo.LiquidContentPopover {
             Label { text: qsTr("Group"); color: AppTheme.mutedText; Layout.preferredWidth: 56 }
             CalendarComboBox { id: groupField; objectName: "listGroup"; Layout.fillWidth: true; textRole: "label"; model: [{name: "", label: qsTr("None")}].concat(root.availableGroups.map(group => ({name: group.name, label: group.name}))) }
         }
-        Label { visible: kindBox.currentIndex === 1; text: qsTr("Match all conditions. Reminders stay in their original lists."); Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 11; color: AppTheme.mutedText }
+        Label { visible: kindBox.currentIndex === 1; text: qsTr("Match all conditions. Reminders stay in their original lists."); Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: AppTheme.fontSize(11); color: AppTheme.mutedText }
         ColumnLayout {
             visible: kindBox.currentIndex === 1
             Layout.fillWidth: true
@@ -117,7 +117,7 @@ Demo.LiquidContentPopover {
                 CalendarComboBox { id: priorityBox; Layout.fillWidth: true; model: [qsTr("Any"), qsTr("High"), qsTr("Medium"), qsTr("Low"), qsTr("None")] }
             }
         }
-        Label { text: qsTr("Color"); color: AppTheme.mutedText; font.pixelSize: 12 }
+        Label { text: qsTr("Color"); color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(12) }
         GridLayout {
             Layout.fillWidth: true
             columns: 9
@@ -142,7 +142,7 @@ Demo.LiquidContentPopover {
                 }
             }
         }
-        Label { text: qsTr("Icon"); color: AppTheme.mutedText; font.pixelSize: 12 }
+        Label { text: qsTr("Icon"); color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(12) }
         GridLayout {
             Layout.fillWidth: true
             columns: 9
@@ -165,7 +165,7 @@ Demo.LiquidContentPopover {
                 }
             }
         }
-        Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.destructive; font.pixelSize: 11 }
+        Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: AppTheme.destructive; font.pixelSize: AppTheme.fontSize(11) }
     }
     }
     footer: CalendarEditorFooter {

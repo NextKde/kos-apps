@@ -24,7 +24,7 @@ GridLayout {
             radius: 8
             color: design.controlFill
             Image { id: preview; anchors.fill: parent; anchors.margins: 4; source: thumbnail.modelData; sourceSize: Qt.size(120,120); fillMode: Image.PreserveAspectFit; asynchronous: true }
-            Label { anchors.centerIn: parent; visible: preview.status === Image.Error; text: qsTr("Unavailable"); font.pixelSize: 10; color: design.labelSecondary }
+            Label { anchors.centerIn: parent; visible: preview.status === Image.Error; text: qsTr("Unavailable"); font.pixelSize: AppTheme.fontSize(10); color: design.labelSecondary }
             MouseArea { anchors.fill: parent; onClicked: Qt.openUrlExternally(thumbnail.modelData); cursorShape: Qt.PointingHandCursor }
             ToolButton {
                 id: remove

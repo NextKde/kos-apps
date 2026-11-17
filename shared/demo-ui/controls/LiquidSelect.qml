@@ -14,7 +14,7 @@ Item {
     // The floor keeps a placeholder-only field from collapsing.
     implicitWidth: Math.ceil(Math.max(plainTrigger ? 0 : 72,
         (plainTrigger ? 0 : 25) + label.implicitWidth + root.colorMarkerSpace + root.indicatorSpacing + chevron.implicitWidth))
-    implicitHeight: Foundation.AppTheme.compactDesign ? 28 : 36
+    implicitHeight: Math.max(Foundation.AppTheme.compactDesign ? 28 : 36, label.implicitHeight + 8)
     activeFocusOnTab: true
     opacity: enabled ? 1 : .38
 
@@ -222,7 +222,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.labelAt(root._visualIndex) || root.placeholder
                 color: root.labelAt(root._visualIndex).length > 0 ? root.textColor : root.mutedTextColor
-                font.pixelSize: root.plainTrigger ? 13 : Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : 13
+                font.pixelSize: root.plainTrigger ? Foundation.AppTheme.fontSize(13) : Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : Foundation.AppTheme.fontSize(13)
                 font.weight: root.plainTrigger ? Font.Normal : Font.Medium
                 elide: Text.ElideRight
             }
@@ -273,7 +273,7 @@ Item {
 
     FontMetrics {
         id: optionMetrics
-        font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : 13
+        font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : Foundation.AppTheme.fontSize(13)
         font.weight: root.popupFontWeight
     }
 
@@ -294,7 +294,7 @@ Item {
             : Math.max(160, root.width)
         implicitHeight: Math.min(360, choices.implicitHeight + 2 * padding)
         readonly property real panelRadius: 8
-        readonly property int optionHeight: 24
+        readonly property int optionHeight: Math.max(24, Math.ceil(optionMetrics.height + 10))
         padding: 3
         modal: false
         focus: true
@@ -449,7 +449,7 @@ Item {
                             text: root.labelAt(parent.index)
                             elide: Text.ElideRight
                             color: choiceDelegate.blueActive ? "#ffffff" : root.popupTextColor
-                            font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : 13
+                            font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : Foundation.AppTheme.fontSize(13)
                             font.weight: root.popupFontWeight
                         }
                         VectorIcon {

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Kos.Ui
 import QtQuick.Controls
 import QtQuick.Layouts
 import Kos.Demo as Demo
@@ -13,7 +14,7 @@ Item {
     property bool switchingEnabled: true
     signal switchRequested(int index)
     // 28px selector, 8px above and 19px below (15px extra breathing room).
-    implicitHeight: 55
+    implicitHeight: Demo.AppTheme.textExtent(28) + 27
     Rectangle {
         anchors.fill: parent
         anchors.topMargin: 8
@@ -32,13 +33,14 @@ Item {
                     required property string modelData
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    padding: 2
                     enabled: root.switchingEnabled || index === root.currentIndex
                     text: modelData
                     contentItem: Label {
                         text: modelData
                         color: index === root.currentIndex ? "#FFFFFF" : Demo.AppTheme.text
                         opacity: parent.enabled ? 1 : 0.45
-                        font.pixelSize: 13
+                        font.pixelSize: AppTheme.fontSize(13)
                         font.weight: index === root.currentIndex ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter

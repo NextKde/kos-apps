@@ -14,7 +14,7 @@ TextArea {
     topPadding: blockInput ? 4 : padding
     bottomPadding: topPadding
     font.weight: Font.Normal
-    font.pixelSize: 12
+    font.pixelSize: AppTheme.fontSize(12)
     color: AppTheme.text
     placeholderTextColor: AppTheme.mutedText
     selectionColor: AppTheme.accent

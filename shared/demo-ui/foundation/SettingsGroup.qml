@@ -29,7 +29,7 @@ Item {
         visible: root.title.length > 0
         text: root.title
         color: root.titleColor
-        font.pixelSize: 15
+        font.pixelSize: AppTheme.fontSize(15)
         font.weight: Font.Bold
         wrapMode: Text.Wrap
         Accessible.role: Accessible.Heading

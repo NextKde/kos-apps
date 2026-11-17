@@ -11,13 +11,13 @@ TextField {
     property bool invalid: false
     property color outlineColor: "transparent"
     implicitWidth: 150
-    implicitHeight: 24
+    implicitHeight: Math.max(24, contentHeight + topPadding + bottomPadding + 4)
     topPadding: filled ? 3 : 0
     bottomPadding: topPadding
     padding: filled ? 6 : 0
     leftPadding: blockInput ? 12 : padding
     rightPadding: blockInput ? 12 : padding
-    font.pixelSize: 12
+    font.pixelSize: AppTheme.fontSize(12)
     font.weight: Font.Normal
     color: AppTheme.text
     placeholderTextColor: AppTheme.mutedText

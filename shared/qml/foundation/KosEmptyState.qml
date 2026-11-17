@@ -45,7 +45,7 @@ Item {
             color: root.titleColor
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            font.pixelSize: 17
+            font.pixelSize: AppTheme.fontSize(17)
             font.weight: Font.DemiBold
         }
 
@@ -55,7 +55,7 @@ Item {
             color: root.descriptionColor
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            font.pixelSize: 14
+            font.pixelSize: AppTheme.fontSize(14)
             lineHeight: 1.22
             visible: text.length > 0
         }

@@ -1,0 +1,72 @@
+{
+  "controls/LiquidActionButton.qml": {
+    "baseline_sha256": "bf99ac69292149215283cade061e56d5b000c112bec9706adfc5a9d7a71d9d1f",
+    "sha256": "f92d99cc1f6168ec4ede63a5a58acc0268955000c5a155e05235c1ecdb3bb5a7",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "controls/LiquidDialog.qml": {
+    "baseline_sha256": "86a688a7f52c8f8c8bbf5ed75064b0adc0e214e5ce7bab531646d4c959efdb9b",
+    "sha256": "7b9580abda841095056aa70dfc590c3a6c100777cb49accbb21456863daa906b",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "controls/LiquidPopover.qml": {
+    "baseline_sha256": "df9f380c7710e779f52d7aa4e1bb33ceb8ddcb13cbfa9d7a7619cfb54b124930",
+    "sha256": "9411d441e35b6f5f242e83829300f94b9dc7f68cb807a892a0a9ace8f6138afc",
+    "reason": "Keep menu width tied to real actions."
+  },
+  "controls/LiquidPopoverItem.qml": {
+    "baseline_sha256": "10337d2ba37dcd2fe5f0a0e652110a55ebf61dd8be06ed43b72a877853afd09b",
+    "sha256": "35230ee275659421405824e41d28090c2d47646fa4cb105e786b2e4d3b318209",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "controls/LiquidSegmentedControl.qml": {
+    "baseline_sha256": "2170672e3dee125e0a92b8c20d04b750516ccb0fc370768365f099a9dbd9b879",
+    "sha256": "cb23834865c8e3057a158edb84048466cfc8328c02a3f778dbfbb407c68a09b6",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "controls/LiquidSelect.qml": {
+    "baseline_sha256": "4f7b4269d762ebd563eda2669b59b2d008b49465e0e7f6fd308d86df1cb5d40e",
+    "sha256": "4ffb6a2555d04c8ad7bff88b5f4479709da353c04c973336c3ee095cf494d62a",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/AppTheme.qml": {
+    "baseline_sha256": "cf08420e16161cbaceaa0b52c92803c05490b2e0e7c943ad9057c39b0414856d",
+    "sha256": "8bbe6a1c375d54d43f74c929ac6cddab92fe1f55b7bfe4dcea1f140eb284bb2a",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/KosToolTip.qml": {
+    "baseline_sha256": "4ad28f8270702ca1494197f2c64ff873909285ebbf7dc3db3ede51fc860be703",
+    "sha256": "e789953ea4cc08be94de7c0b49619af86c5e5d45f03a251148678a1f2d07f80a",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsDateField.qml": {
+    "baseline_sha256": "b273ca7718ac74442d83d8fba9a5fa203141455a34c1813e02c624945912e634",
+    "sha256": "8f0845d458da4dac314d1713172252b61afd59dd315631b915da630d12e5dff0",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsGroup.qml": {
+    "baseline_sha256": "ff94089636e5195ddb6f84d086373b1db93aeb963676cf1d53f31ad9ecfa9c6d",
+    "sha256": "174fde98739c0ac73730809635e892bbc293b6433765e903005dc3e39bc12619",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsItem.qml": {
+    "baseline_sha256": "24d65b7246d491f5c3c13af17fd052aab20e6309aa66b9d1289687ddd5cb7b73",
+    "sha256": "f6807af2107683e024b1bdb1b04c3773922871960b1e5a33d662fe535f8d844f",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsTextArea.qml": {
+    "baseline_sha256": "0d7f70e39f80237f86d4f29e49e52f925230a960330c51eb08946e33006d624f",
+    "sha256": "b5ed1b58638930d92acababdbc550fc556198c744215e1f5e31a9cd48a13be7c",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsTextField.qml": {
+    "baseline_sha256": "2d11d690a0f11a67055687eb4c5f7105aedbd39e1ad2bcac41bbb6cd3a5d54ae",
+    "sha256": "c438266f44f9e3a6b615f5424abf0c0548d0c0ac40b8a597e8c41e970cf2449d",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  },
+  "foundation/SettingsTimeField.qml": {
+    "baseline_sha256": "3b84a0acc71c9791291964df9f94a4be886400d84d9143b1842b461aea40dccb",
+    "sha256": "883b82d2a8e0bd51949e7497faaf00d712d8ed3269da620449b3180c20dff27c",
+    "reason": "Adapt text and control geometry to host-controlled font scaling; default scale remains 1.0."
+  }
+}

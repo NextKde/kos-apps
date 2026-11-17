@@ -10,6 +10,7 @@ namespace {
 constexpr auto appearanceKey = "Appearance/mode";
 constexpr auto materialKey = "Appearance/material";
 constexpr auto materialOpacityKey = "Appearance/materialOpacity";
+constexpr auto textSizeKey = "Typography/size";
 constexpr auto accentKey = "Appearance/accent";
 constexpr auto reduceTransparencyKey = "Appearance/reduceTransparency";
 constexpr auto reduceMotionKey = "Appearance/reduceMotion";
@@ -81,6 +82,21 @@ qreal ApplicationPreferences::materialOpacity() const
         ? value(QLatin1String(materialOpacityKey), 0.86).toDouble(&ok)
         : override.toDouble(&ok);
     return qBound<qreal>(0.72, ok ? stored : 0.86, 0.98);
+}
+
+QString ApplicationPreferences::textSize() const
+{
+    return acceptedValue(value(QLatin1String(textSizeKey), QStringLiteral("medium")).toString(),
+                         {QStringLiteral("small"), QStringLiteral("medium"),
+                          QStringLiteral("large"), QStringLiteral("extra-large")},
+                         QStringLiteral("medium"));
+}
+
+void ApplicationPreferences::setTextSize(const QString &size)
+{
+    setValue(QLatin1String(textSizeKey), acceptedValue(size,
+        {QStringLiteral("small"), QStringLiteral("medium"), QStringLiteral("large"),
+         QStringLiteral("extra-large")}, QStringLiteral("medium")));
 }
 
 QString ApplicationPreferences::accentName() const
@@ -214,6 +230,7 @@ QString ApplicationPreferences::fingerprint() const
         materialMode(),
         QString::number(materialOpacity(), 'f', 3),
         accentName(),
+        textSize(),
         reduceTransparency() ? QStringLiteral("1") : QStringLiteral("0"),
         reduceMotion() ? QStringLiteral("1") : QStringLiteral("0"),
     }.join(QLatin1Char('|'));

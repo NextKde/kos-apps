@@ -38,7 +38,7 @@ ScrollView {
                     readonly property bool selected: root.workspace.filter === modelData.key
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
-                    implicitHeight: 60
+                    implicitHeight: Math.max(AppTheme.textExtent(66), contentItem.implicitHeight + topPadding + bottomPadding)
                     padding: 8
                     Accessible.name: modelData.title + ": " + root.workspace.count(modelData.key, "")
                     onClicked: root.workspace.select(modelData.key)
@@ -57,9 +57,9 @@ ScrollView {
                                 Demo.VectorIcon { anchors.centerIn: parent; name: smart.modelData.icon; size: 14; color: "white" }
                             }
                             Item { Layout.fillWidth: true }
-                            Label { text: root.workspace.count(smart.modelData.key, ""); font.pixelSize: 18; font.weight: Font.DemiBold; color: design.labelPrimary }
+                            Label { text: root.workspace.count(smart.modelData.key, ""); font.pixelSize: AppTheme.fontSize(18); font.weight: Font.DemiBold; color: design.labelPrimary }
                         }
-                        Label { text: smart.modelData.title; Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 12; font.weight: Font.DemiBold; color: design.labelPrimary }
+                        Label { text: smart.modelData.title; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: AppTheme.fontSize(12); font.weight: Font.DemiBold; color: design.labelPrimary }
                     }
                 }
             }
@@ -78,7 +78,7 @@ ScrollView {
             Layout.topMargin: 14
             Layout.leftMargin: 16
             Layout.rightMargin: 12
-            Label { text: qsTr("My lists"); color: design.labelSecondary; font.pixelSize: 11; Layout.fillWidth: true }
+            Label { text: qsTr("My lists"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(11); Layout.fillWidth: true }
             ToolButton {
                 id: addList
                 objectName: "addReminderListOrGroup"
@@ -128,7 +128,7 @@ ScrollView {
                         contentItem: RowLayout {
                             spacing: 6
                             Demo.VectorIcon { Layout.alignment: Qt.AlignVCenter; name: "folder"; size: 16; color: design.labelSecondary }
-                            Label { text: group.modelData.name; Layout.fillWidth: true; Layout.fillHeight: true; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.pixelSize: 12; font.weight: Font.DemiBold; color: design.labelPrimary }
+                            Label { text: group.modelData.name; Layout.fillWidth: true; Layout.fillHeight: true; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight; font.pixelSize: AppTheme.fontSize(12); font.weight: Font.DemiBold; color: design.labelPrimary }
                         }
                         background: Rectangle { radius: design.navigationRadius; color: root.workspace.filter === "group" && root.workspace.listId === group.modelData.id ? design.selectionFill : groupHeader.hovered ? design.rowHoverFill : "transparent" }
                         onClicked: root.workspace.select("group", group.modelData.id)
@@ -204,7 +204,7 @@ ScrollView {
             Layout.leftMargin: 16
             text: qsTr("Tags")
             color: design.labelSecondary
-            font.pixelSize: 11
+            font.pixelSize: AppTheme.fontSize(11)
         }
         Flow {
             Layout.fillWidth: true
@@ -219,13 +219,13 @@ ScrollView {
                     readonly property bool selected: root.workspace.filter === "tag" && root.workspace.listId === modelData
                     text: "#" + modelData
                     implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
-                    implicitHeight: 22
+                    implicitHeight: AppTheme.textExtent(26)
                     leftPadding: 6; rightPadding: 6
                     topPadding: 2; bottomPadding: 2
                     hoverEnabled: true
                     Accessible.checkable: true
                     Accessible.checked: selected
-                    contentItem: Label { text: tagButton.text; color: tagButton.selected ? "#FFFFFF" : design.labelPrimary; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    contentItem: Label { text: tagButton.text; color: tagButton.selected ? "#FFFFFF" : design.labelPrimary; font.pixelSize: AppTheme.fontSize(11); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     background: Rectangle { radius: 11; color: tagButton.selected ? design.accent : tagButton.hovered || tagButton.visualFocus ? (AppTheme.dark ? "#505056" : "#CFCFD3") : design.controlFill }
                     onClicked: {
                         if (selected) root.workspace.select("all")
@@ -256,8 +256,8 @@ ScrollView {
                 color: nav.listColor
                 Demo.VectorIcon { anchors.centerIn: parent; name: nav.iconName; size: 11; color: "white" }
             }
-            Label { text: nav.label; color: design.labelPrimary; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
-            Label { text: String(nav.count); color: design.labelSecondary; font.pixelSize: 11 }
+            Label { text: nav.label; color: design.labelPrimary; font.pixelSize: AppTheme.fontSize(12); Layout.fillWidth: true; elide: Text.ElideRight }
+            Label { text: String(nav.count); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(11) }
         }
         background: Rectangle { radius: design.navigationRadius; color: nav.selected ? design.selectionFill : nav.hovered ? design.rowHoverFill : "transparent" }
     }

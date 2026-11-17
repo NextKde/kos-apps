@@ -69,7 +69,7 @@ Button {
     readonly property real opticalMagnification: buttonGlass.magnification
     readonly property real opticalReflection: buttonGlass.reflectionStrength
     hoverEnabled: true
-    implicitHeight: Foundation.AppTheme.compactDesign ? 28 : 36
+    implicitHeight: Math.max(Foundation.AppTheme.compactDesign ? 28 : 36, contentItem.implicitHeight + topPadding + bottomPadding)
     font.weight: Font.Medium
     Binding {
         target: root; property: "font.pixelSize"

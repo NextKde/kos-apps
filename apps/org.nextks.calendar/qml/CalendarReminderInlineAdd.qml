@@ -61,7 +61,7 @@ ItemDelegate {
                 Layout.fillWidth: true
                 implicitHeight: 24
                 padding: 0
-                font.pixelSize: 14
+                font.pixelSize: AppTheme.fontSize(14)
                 color: design.labelPrimary
                 placeholderTextColor: design.labelSecondary
                 placeholderText: root.editing || root.hovered ? qsTr("New reminder") : ""
@@ -84,6 +84,6 @@ ItemDelegate {
             Layout.leftMargin: 30
             Layout.rightMargin: 30
         }
-        Label { visible: root.errorText.length > 0; text: root.errorText; color: design.statusWarning; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+        Label { visible: root.errorText.length > 0; text: root.errorText; color: design.statusWarning; font.pixelSize: AppTheme.fontSize(11); Layout.fillWidth: true; wrapMode: Text.WordWrap }
     }
 }

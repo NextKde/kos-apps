@@ -5,6 +5,9 @@ import "../i18n"
 
 QtObject {
     id: theme
+    property real textScale: 1.0
+    function fontSize(base) { return Math.max(Math.min(base, 10), Math.round(base * textScale)) }
+    function textExtent(base) { return Math.ceil(base * Math.max(1, textScale)) }
     // Qt.formatDate* uses the C locale; use the selected UI locale explicitly.
     readonly property var uiLocale: Qt.locale()
     function formatDate(date, format) {

@@ -91,7 +91,7 @@ Pane {
     // T01: single source for the hour pitch of the timed grid. The hour-cell
     // delegate height and the initial scroll offset both derive from this, so
     // they can no longer drift apart.
-    readonly property int hourHeight: 40
+    readonly property int hourHeight: AppTheme.textExtent(40)
 
     // A01 step 2 (R072): the all-day band's row geometry, derived from one
     // anchor and measured off the reference at 1:1. Reference rows sit at
@@ -100,7 +100,7 @@ Pane {
     // Our vertical factor against the reference is 1.33 (40px hour pitch vs
     // 27), so row 18 -> 24, gap 1 -> 1, and the 60px band -> 80px. The band
     // height is DERIVED from the row height so the two can never drift.
-    readonly property int allDayRowHeight: 20
+    readonly property int allDayRowHeight: AppTheme.textExtent(20)
     readonly property int allDayRowGap: 1
     // A04's cap: the tallest band this view will draw before a column spends its
     // last slot on a `+N` remainder row.
@@ -449,7 +449,7 @@ Pane {
                         Locale.ShortFormat)
                     color: headerCell.weekend ? root.weekendText
                                               : AppTheme.text
-                    font.pixelSize: 11
+                    font.pixelSize: AppTheme.fontSize(11)
                 }
 
                 Rectangle {
@@ -464,7 +464,7 @@ Pane {
                         text: String(headerCell.headerDate.getDate())
                         color: headerCell.today ? "#FFFFFF"
                             : root.normalDateColor
-                        font.pixelSize: 12
+                        font.pixelSize: AppTheme.fontSize(12)
                         font.weight: headerCell.today
                             ? Font.DemiBold : Font.Normal
                     }
@@ -523,7 +523,7 @@ Pane {
                 Layout.preferredHeight: root.allDayBandHeight
                 text: qsTr("all-day")
                 color: AppTheme.mutedText
-                font.pixelSize: 10
+                font.pixelSize: AppTheme.fontSize(10)
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignTop
                 topPadding: 8
@@ -695,7 +695,7 @@ Pane {
                                     // same chip family as the timed chip and the ref inks
                                     // both the same way.
                                     color: allDayChip.inkColor
-                                    font.pixelSize: 10
+                                    font.pixelSize: AppTheme.fontSize(10)
                                     font.strikeout: root.itemCompleted(allDayChip.modelData)
                                     verticalAlignment: Text.AlignVCenter
                                     elide: Text.ElideRight
@@ -738,7 +738,7 @@ Pane {
                             color: allDayStack.allDayOverflow > 0
                                 ? root.chipInk(allDayColumn.columnItems[allDayStack.allDayVisible])
                                 : "transparent"
-                            font.pixelSize: 10
+                            font.pixelSize: AppTheme.fontSize(10)
                             leftPadding: 5
                             verticalAlignment: Text.AlignVCenter
                             elide: Text.ElideRight
@@ -905,7 +905,7 @@ Pane {
                                 text: hourCell.rowIndex < 12 ? AppTheme.meridiemText(0)
                                                              : AppTheme.meridiemText(12)
                                 color: AppTheme.mutedText
-                                font.pixelSize: 10
+                                font.pixelSize: AppTheme.fontSize(10)
                             }
                             Label {
                                 id: digitText
@@ -922,7 +922,7 @@ Pane {
                                     return (h === 0 ? 12 : h) + ""
                                 }
                                 color: AppTheme.text
-                                font.pixelSize: 11
+                                font.pixelSize: AppTheme.fontSize(11)
                             }
                         }
 
@@ -956,7 +956,7 @@ Pane {
                                 anchors.centerIn: parent
                                 text: root.nowLabel
                                 color: "#FFFFFF"
-                                font.pixelSize: 11
+                                font.pixelSize: AppTheme.fontSize(11)
                                 // C3: DemiBold matches the ref's bold capsule
                                 // and moves white-on-todayRed onto the 3:1
                                 // large-text threshold (same as the 12px
@@ -1021,7 +1021,7 @@ Pane {
                                     visible: hourCell.rowIndex === Math.floor(root.rangeStartMinute/60) && parent.height >= 14
                                     text: qsTr("New event")
                                     color: AppTheme.text
-                                    font.pixelSize: 11
+                                    font.pixelSize: AppTheme.fontSize(11)
                                     elide: Text.ElideRight
                                     width: parent.width-10
                                 }
@@ -1180,7 +1180,7 @@ Pane {
                                                 width: parent.width
                                                 text: root.itemTitle(timedChip.modelData)
                                                 // R-CHIP: E02 title 11–12 medium.
-                                                font.pixelSize: 11
+                                                font.pixelSize: AppTheme.fontSize(11)
                                                 font.weight: Font.Medium
                                                 // R079: was AppTheme.text (grey). The ref's ink is
                                                 // the chip's own calendar colour at half value.
@@ -1242,7 +1242,7 @@ Pane {
                                                     id: secondaryLabel
                                                     width: parent.width - 16
                                                     text: root.itemSecondary(timedChip.modelData)
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: AppTheme.fontSize(10)
                                                     color: timedChip.inkColor
                                                     elide: Text.ElideRight
                                                 }
@@ -1281,7 +1281,7 @@ Pane {
                                     color: chipHost.hasOverflow
                                         ? root.chipInk(hourCell.cellItems[3])
                                         : "transparent"
-                                    font.pixelSize: 10
+                                    font.pixelSize: AppTheme.fontSize(10)
                                     elide: Text.ElideRight
                                 }
                             }

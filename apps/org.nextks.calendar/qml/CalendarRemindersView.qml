@@ -266,15 +266,15 @@ Item {
         spacing: 12
         RowLayout {
             Layout.fillWidth: true
-            Label { text: root.heading; color: ["list", "smart"].includes(root.filter) ? root.listColor(root.listId) : design.labelPrimary; font.pixelSize: 24; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
-            Label { text: String(root.searchQuery.trim() ? root.visibleTodos.length : root.count(root.filter, root.listId)); color: design.labelSecondary; font.pixelSize: 22 }
+            Label { text: root.heading; color: ["list", "smart"].includes(root.filter) ? root.listColor(root.listId) : design.labelPrimary; font.pixelSize: AppTheme.fontSize(24); font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+            Label { text: String(root.searchQuery.trim() ? root.visibleTodos.length : root.count(root.filter, root.listId)); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(22) }
         }
         Label {
             Layout.fillWidth: true
             visible: text.length > 0
             text: root.reorderError || root.pim.errorMessage
             color: root.reorderError || root.pim.errorMessage ? design.statusWarning : design.labelSecondary
-            font.pixelSize: 12
+            font.pixelSize: AppTheme.fontSize(12)
             wrapMode: Text.WordWrap
             Accessible.role: Accessible.Alert
         }
@@ -282,7 +282,7 @@ Item {
             Layout.fillWidth: true
             visible: ["list", "inbox"].includes(root.filter)
             spacing: 6
-            Label { text: qsTr("%1 completed").arg(root.pim.todos.filter(todo => todo.listId === root.listId && todo.completed).length); color: design.labelSecondary; font.pixelSize: 11; Layout.fillWidth: true }
+            Label { text: qsTr("%1 completed").arg(root.pim.todos.filter(todo => todo.listId === root.listId && todo.completed).length); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(11); Layout.fillWidth: true }
             CalendarButton {
                 objectName: "reminderViewMode"
                 text: root.columnsMode ? qsTr("List view") : qsTr("Column view")
@@ -364,7 +364,7 @@ Item {
                 visible: root.displaySections.length === 0
                 text: !root.pim.ready ? qsTr("Loading reminders…") : root.searchQuery.trim() ? qsTr("No matching reminders") : root.filter === "group" ? qsTr("Move a list into this group to get started.") : qsTr("No reminders")
                 color: design.labelSecondary
-                font.pixelSize: 13
+                font.pixelSize: AppTheme.fontSize(13)
             }
         }
     }

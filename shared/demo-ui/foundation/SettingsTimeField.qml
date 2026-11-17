@@ -6,6 +6,7 @@ import QtQuick.Effects
 
 SettingsTextField {
     id: control
+    function closePicker() { picker.close() }
     property var parseTime: function(value) { return null }
     property var formatTime: function(value) { return Qt.formatTime(value, "HH:mm") }
     property int selectedHour: 0
@@ -62,7 +63,7 @@ SettingsTextField {
         id: picker
         parent: Overlay.overlay
         popupType: Popup.Item
-        width: Math.min(220, parent ? parent.width - 16 : 220)
+        width: Math.min(AppTheme.textExtent(220), parent ? parent.width - 16 : AppTheme.textExtent(220))
         height: contentItem.implicitHeight + topPadding + bottomPadding
         padding: 10; focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -100,7 +101,7 @@ SettingsTextField {
                         Label {
                             Layout.fillWidth: true
                             text: column.index === 0 ? qsTr("Hour") : qsTr("Minute")
-                            color: AppTheme.text; font.pixelSize: 12; font.bold: true
+                            color: AppTheme.text; font.pixelSize: AppTheme.fontSize(12); font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                         }
                         ListView {
@@ -121,13 +122,14 @@ SettingsTextField {
                             }
                             delegate: Button {
                                 id: valueButton
+                                padding: 2
                                 required property int index
-                                width: values.width - 8; height: 28
+                                width: values.width - 8; height: AppTheme.textExtent(30)
                                 focusPolicy: Qt.NoFocus
                                 Accessible.name: (column.index === 0 ? qsTr("Hour") : qsTr("Minute")) + " " + index
                                 contentItem: Label {
                                     text: String(valueButton.index).padStart(2, "0")
-                                    font.pixelSize: 13
+                                    font.pixelSize: AppTheme.fontSize(13)
                                     color: valueButton.index === values.currentIndex ? "white" : AppTheme.text
                                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                                 }
@@ -139,9 +141,9 @@ SettingsTextField {
                 }
             }
             Button {
-                Layout.fillWidth: true; implicitHeight: 28
+                Layout.fillWidth: true; implicitHeight: AppTheme.textExtent(30); padding: 2
                 text: qsTr("Done")
-                contentItem: Label { text: parent.text; color: AppTheme.text; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                contentItem: Label { text: parent.text; color: AppTheme.text; font.pixelSize: AppTheme.fontSize(12); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 background: Rectangle { radius: 14; color: parent.hovered ? AppTheme.buttonHover : AppTheme.controlBackground }
                 onClicked: control.applyTime()
             }

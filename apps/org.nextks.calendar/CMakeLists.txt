@@ -19,6 +19,7 @@ kos_add_application(kos-calendar
         qml/CalendarToolTip.qml
         qml/CalendarPopupSurface.qml
         qml/CalendarStyle.qml
+        qml/CalendarSettingsDialog.qml
         qml/CalendarButton.qml
         qml/CalendarCheckBox.qml
         qml/CalendarTimeField.qml
@@ -50,3 +51,10 @@ kos_add_application(kos-calendar
         Kos::PimClientPlugin
         Qt6::QuickDialogs2
 )
+
+if(BUILD_TESTING)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(NAME kos-calendar.typography
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/run-typography-review.py ${CMAKE_BINARY_DIR})
+    set_tests_properties(kos-calendar.typography PROPERTIES TIMEOUT 240 LABELS ui)
+endif()

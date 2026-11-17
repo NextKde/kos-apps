@@ -48,7 +48,7 @@ Demo.LiquidContentPopover {
     modal: false
     popupType: Popup.Item
     // P02/P03: compact neutral editor, matching the event editor treatment.
-    width: Math.min(288, parent ? parent.width - 16 : 288)
+    width: Math.min(AppTheme.textExtent(360), parent ? parent.width - 24 : AppTheme.textExtent(360))
     height: Math.min((header ? header.implicitHeight : 0) + (footer ? footer.implicitHeight : 0)
         + formLayout.implicitHeight + topPadding + bottomPadding, parent ? parent.height - 16 : 560)
     standardButtons: Dialog.Save | Dialog.Cancel
@@ -59,7 +59,7 @@ Demo.LiquidContentPopover {
     signal switchTypeRequested()
     header: CalendarEditorTabs {
         visible: root.allowTypeSwitch && root.editingId.length === 0
-        implicitHeight: visible ? 55 : 0
+        implicitHeight: visible ? AppTheme.textExtent(28) + 27 : 0
         leftInset: root.leftPadding
         // Match the form width, including its 8px scrollbar gutter.
         rightInset: root.rightPadding + 8
@@ -67,7 +67,7 @@ Demo.LiquidContentPopover {
         switchingEnabled: root.allowTypeSwitch && root.editingId.length === 0 && !root.saving
         onSwitchRequested: root.switchTypeRequested()
     }
-    readonly property int labelColumnWidth: 56
+    readonly property int labelColumnWidth: AppTheme.textExtent(118)
     readonly property int fieldHeight: design.fieldHeight
 
     // Fixed compact action row; the form scrolls independently.
@@ -448,8 +448,8 @@ Demo.LiquidContentPopover {
             width: editorScroll.width - 8
             spacing: 6
             enabled: !root.saving
-            Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; color: root.errorColor; font.pixelSize: 11; wrapMode: Text.WordWrap }
-            Label { visible: root.parentId.length > 0; text: qsTr("Subtask of %1").arg(root.parentTitle); Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 11; color: AppTheme.mutedText }
+            Label { visible: root.errorText.length > 0; text: root.errorText; Layout.fillWidth: true; color: root.errorColor; font.pixelSize: AppTheme.fontSize(11); wrapMode: Text.WordWrap }
+            Label { visible: root.parentId.length > 0; text: qsTr("Subtask of %1").arg(root.parentTitle); Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: AppTheme.fontSize(11); color: AppTheme.mutedText }
             Demo.SettingsGroup {
                 cornerRadius: 8
                 backgroundColor: AppTheme.dark ? "#363638" : "#EDEDEF"
@@ -613,7 +613,7 @@ Demo.LiquidContentPopover {
                                 readonly property var selectedTags: tagsField.text.split(/[\s,，]+/).map(value => value.replace(/^#+/, "")).filter(Boolean)
                                 readonly property bool selected: selectedTags.some(value => value.toLocaleLowerCase() === modelData.toLocaleLowerCase())
                                 implicitWidth: contentItem.implicitWidth + 12; implicitHeight: 22; padding: 2; leftPadding: 6; rightPadding: 6
-                                contentItem: Label { text: "#" + tag.modelData; color: tag.selected ? "white" : design.labelPrimary; font.pixelSize: 11; verticalAlignment: Text.AlignVCenter }
+                                contentItem: Label { text: "#" + tag.modelData; color: tag.selected ? "white" : design.labelPrimary; font.pixelSize: AppTheme.fontSize(11); verticalAlignment: Text.AlignVCenter }
                                 background: Rectangle { radius: 11; color: tag.selected ? design.accent : tag.hovered ? design.selectionFill : design.controlFill }
                                 onClicked: tagsField.text = (selected ? selectedTags.filter(value => value.toLocaleLowerCase() !== modelData.toLocaleLowerCase()) : selectedTags.concat([modelData])).map(value => "#" + value).join(" ")
                             }

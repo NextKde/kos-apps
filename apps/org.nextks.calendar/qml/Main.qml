@@ -13,6 +13,12 @@ import Kos.Demo as Demo
 KosApplicationWindow {
     id: root
     neutralTypography: true
+    accentNameOverride: "blue"
+    font.pixelSize: AppTheme.fontSize(13)
+    readonly property real calendarTextScale: !applicationSettings ? 1 :
+        ({"small": 0.9, "medium": 1, "large": 1.15, "extra-large": 1.3})[applicationSettings.textSize] || 1
+    Binding { target: AppTheme; property: "textScale"; value: root.calendarTextScale }
+    Binding { target: Demo.AppTheme; property: "textScale"; value: root.calendarTextScale }
     readonly property alias calendarScene: windowChrome
     readonly property alias pimStore: pim
 
@@ -229,7 +235,7 @@ KosApplicationWindow {
                     anchors.centerIn: parent
                     text: row.markerGlyph
                     color: row.markerColor
-                    font.pixelSize: 12
+                    font.pixelSize: AppTheme.fontSize(12)
                     font.weight: Font.DemiBold
                 }
             }
@@ -549,8 +555,8 @@ KosApplicationWindow {
         cornerRadius: height / 2
         iconOnly: iconName.length > 0
         iconSize: 16
-        implicitHeight: root.design.dateNavHeight
-        implicitWidth: iconOnly ? root.design.dateNavHeight : Math.max(48, implicitContentWidth + 20)
+        implicitHeight: Math.max(root.design.dateNavHeight, contentItem.implicitHeight + topPadding + bottomPadding)
+        implicitWidth: iconOnly ? root.design.dateNavHeight : Math.max(48, contentItem.implicitWidth + leftPadding + rightPadding + 4)
         focusRingColor: AppTheme.focusRing
         focusPolicy: Qt.TabFocus
         Accessible.name: hint
@@ -1284,15 +1290,10 @@ KosApplicationWindow {
         onDeleteRequested: uid => pim.removeTodo(uid)
     }
 
-    KosSettingsDialog {
+    CalendarSettingsDialog {
         id: settingsDialog
         settings: root.applicationSettings
-        applicationName: qsTr("Calendar")
-        inWindowMaterials: true
-        inWindowSamplingAvailable: GraphicsInfo.api !== GraphicsInfo.Software
-        toolTipBackground: Component {
-            CalendarPopupSurface { scene: root.calendarScene; radius: 14; materialOpacity: 0.7 }
-        }
+        samplingAvailable: root.contentItem.GraphicsInfo.api !== GraphicsInfo.Software
     }
 
     Shortcut { sequences: [StandardKey.New]; onActivated: root.remindersMode ? root.openNewReminder(addButton) : root.beginEvent(root.selectedDate, undefined, addButton) }
@@ -1334,7 +1335,10 @@ KosApplicationWindow {
         }
 
         // One header row: liquid controls share the window dots' centre line.
-        readonly property real toolbarCenterY: windowControls.y + windowControls.height / 2
+        readonly property real toolbarCenterY: Math.max(windowControls.y + windowControls.height / 2, root.design.segmentHeight / 2 + 8)
+        readonly property bool twoToolbarRows: toolbar.mainWidth < viewSegment.width + 2 * (root.design.toolbarButtonSize * 2 + 24)
+            || (!root.sidebarExpanded && collapsedWorkspaceSwitch.visible)
+        readonly property real bodyTop: Math.max(root.design.toolbarHeight, 2 * toolbarCenterY) + (twoToolbarRows ? root.design.segmentHeight + 8 : 0)
 
         // The same slot is used by the client fallback and negotiated KWin lights.
         KosWindowControls {
@@ -1414,7 +1418,7 @@ KosApplicationWindow {
                 anchors.verticalCenter: sidebarToggleButton.verticalCenter
                 text: qsTr("Calendar")
                 color: AppTheme.text
-                font.pixelSize: 15
+                font.pixelSize: AppTheme.fontSize(15)
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
@@ -1467,12 +1471,13 @@ KosApplicationWindow {
             }
 
             Demo.LiquidSegmentedControl {
+                id: collapsedWorkspaceSwitch
                 objectName: "collapsedWorkspaceSwitch"
                 visible: !root.sidebarExpanded && !toolbarSearch.active && toolbarSearch.width === 0
                 x: addButton.x + addButton.width + root.design.toolbarGap
                 anchors.verticalCenter: parent.verticalCenter
-                width: 128
-                height: root.design.segmentHeight
+                width: Math.max(128, minimumLabelWidth)
+                height: Math.max(root.design.segmentHeight, minimumLabelHeight)
                 labels: [qsTr("Calendar"), qsTr("Reminders")]
                 currentIndex: root.remindersMode ? 1 : 0
                 backdrop: chromeBackdrop
@@ -1488,10 +1493,10 @@ KosApplicationWindow {
                 id: viewSegment
                 objectName: "toolbarViewSegment"
                 anchors.verticalCenter: parent.verticalCenter
-                x: toolbar.mainLeft
-                   + Math.max(0, (toolbar.mainWidth - width) / 2)
-                width: root.design.segmentWidth
-                height: root.design.segmentHeight
+                anchors.verticalCenterOffset: windowChrome.twoToolbarRows ? root.design.segmentHeight + 8 : 0
+                x: toolbar.mainLeft + Math.max(0, (toolbar.mainWidth - width) / 2)
+                width: Math.max(root.design.segmentWidth, minimumLabelWidth)
+                height: Math.max(root.design.segmentHeight, minimumLabelHeight)
                 // L05: strict mutual exclusion with the search field. The
                 // segment is hidden the moment the search opens and only
                 // reappears once the field has fully collapsed (width == 0) —
@@ -1724,7 +1729,7 @@ KosApplicationWindow {
             objectName: "applicationSidebar"
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.topMargin: root.design.toolbarHeight
+            anchors.topMargin: windowChrome.bodyTop
             anchors.bottom: parent.bottom
             width: root.sidebarExpanded ? root.design.sidebarWidth : 0
             // Clip only while collapsing/expanding so the animated width never
@@ -1753,7 +1758,7 @@ KosApplicationWindow {
                     Layout.rightMargin: 12
                     Layout.topMargin: 8
                     Layout.bottomMargin: 8
-                    Layout.preferredHeight: 30
+                    Layout.preferredHeight: Math.max(30, minimumLabelHeight)
                     labels: [qsTr("Calendar"), qsTr("Reminders")]
                     currentIndex: root.remindersMode ? 1 : 0
                     backdrop: chromeBackdrop
@@ -1789,7 +1794,7 @@ KosApplicationWindow {
                             Layout.fillWidth: true
                             text: qsTr("My calendars")
                             color: root.design.labelSecondary
-                            font.pixelSize: 11
+                            font.pixelSize: AppTheme.fontSize(11)
                         }
                         ToolButton {
                             id: addCalendarButton
@@ -1879,10 +1884,10 @@ KosApplicationWindow {
                         Layout.leftMargin: root.design.categoryInset
                         Layout.topMargin: root.design.categoryHeadingTop
                         Layout.bottomMargin: root.design.categoryHeadingBottom
-                        Layout.preferredHeight: 16
+                        Layout.preferredHeight: AppTheme.textExtent(20)
                         text: qsTr("Other")
                         color: root.design.labelSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: AppTheme.fontSize(11)
                         verticalAlignment: Text.AlignVCenter
                     }
 
@@ -1968,7 +1973,7 @@ KosApplicationWindow {
                         contentItem: RowLayout {
                             spacing: 8
                             Demo.VectorIcon { name: "plus"; size: 14; color: root.design.labelSecondary }
-                            Label { Layout.fillWidth: true; text: qsTr("Add holiday calendar…"); color: root.design.labelSecondary; font.pixelSize: 12; elide: Text.ElideRight }
+                            Label { Layout.fillWidth: true; text: qsTr("Add holiday calendar…"); color: root.design.labelSecondary; font.pixelSize: AppTheme.fontSize(12); elide: Text.ElideRight }
                         }
                         background: Rectangle { radius: 6; color: addHolidayButton.hovered || addHolidayButton.visualFocus ? root.design.rowHoverFill : "transparent" }
                         onClicked: holidayDialog.startAdding()
@@ -1982,10 +1987,11 @@ KosApplicationWindow {
                 // stretch it.
                 Item {
                     id: miniCalendar
-                    visible: !root.remindersMode
+                    // Prefer readable source lists over a compressed duplicate month grid.
+                    visible: !root.remindersMode && sidebar.height >= AppTheme.textExtent(380)
 
                     readonly property real fixedHeight:
-                        headingRow.height + 18 + 6 * cellHeight
+                        headingRow.height + AppTheme.textExtent(18) + 6 * cellHeight
 
                     Layout.fillWidth: true
                     Layout.leftMargin: root.design.categoryInset
@@ -1995,7 +2001,7 @@ KosApplicationWindow {
                     Layout.preferredHeight: fixedHeight
                     Layout.maximumHeight: fixedHeight
                     readonly property real cellWidth: width / 7
-                    readonly property real cellHeight: 21
+                    readonly property real cellHeight: AppTheme.textExtent(21)
 
                     // M02: month title centred between two equal 28x28
                     // arrows; title and grid share the same inset area.
@@ -2003,7 +2009,7 @@ KosApplicationWindow {
                         id: headingRow
                         objectName: "miniCalendarHeading"
                         width: parent.width
-                        height: 26
+                        height: AppTheme.textExtent(30)
                         spacing: 2
 
                         KosToolButton {
@@ -2027,7 +2033,7 @@ KosApplicationWindow {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             font.weight: Font.DemiBold
-                            font.pixelSize: 13
+                            font.pixelSize: AppTheme.fontSize(13)
                             elide: Text.ElideRight
                         }
 
@@ -2056,12 +2062,12 @@ KosApplicationWindow {
                             x: index * miniCalendar.cellWidth
                             y: headingRow.height
                             width: miniCalendar.cellWidth
-                            height: 18
+                            height: AppTheme.textExtent(18)
                             text: root.weekdayName(index, Locale.NarrowFormat)
                             color: root.design.labelSecondary
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: 10
+                            font.pixelSize: AppTheme.fontSize(10)
                             font.weight: Font.Medium
                         }
                     }
@@ -2082,7 +2088,7 @@ KosApplicationWindow {
                                 root.sameDay(cellDate, root.now)
 
                             x: (index % 7) * miniCalendar.cellWidth
-                            y: headingRow.height + 18
+                            y: headingRow.height + AppTheme.textExtent(18)
                                 + Math.floor(index / 7) * miniCalendar.cellHeight
                             width: miniCalendar.cellWidth
                             height: miniCalendar.cellHeight
@@ -2136,7 +2142,7 @@ KosApplicationWindow {
                                         color: miniDay.today || miniDay.selected
                                             ? "#FFFFFF"
                                             : root.design.labelPrimary
-                                        font.pixelSize: 11
+                                        font.pixelSize: AppTheme.fontSize(11)
                                         font.weight: miniDay.today || miniDay.selected
                                             ? Font.DemiBold : Font.Normal
                                     }
@@ -2159,7 +2165,7 @@ KosApplicationWindow {
                     visible: !pim.connected
                     text: qsTr("Waiting for the local PIM service")
                     color: root.design.labelSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: AppTheme.fontSize(11)
                     elide: Text.ElideRight
                 }
             }
@@ -2171,7 +2177,7 @@ KosApplicationWindow {
             anchors.left: sidebar.right
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: root.design.toolbarHeight
+            anchors.topMargin: windowChrome.bodyTop
             anchors.bottom: parent.bottom
             visible: root.remindersMode
             pim: root.pimStore
@@ -2199,24 +2205,32 @@ KosApplicationWindow {
             anchors.left: sidebar.right
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: root.design.toolbarHeight
+            anchors.topMargin: windowChrome.bodyTop
             anchors.bottom: parent.bottom
             spacing: 0
 
             // Compact date heading with a semibold title and separate navigation buttons.
             // Long week/day titles elide before the navigation controls.
             Item {
+                id: dateBand
+                readonly property bool stacked: dateTitleMetrics.width + dateNavGroup.implicitWidth
+                    + 2 * root.design.dateBandInset + 16 > width
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.design.dateBandHeight
+                Layout.preferredHeight: stacked ? dateTitle.implicitHeight + dateNavGroup.implicitHeight + 18
+                    : Math.max(root.design.dateBandHeight, dateTitle.implicitHeight + 12)
+                Layout.minimumHeight: Layout.preferredHeight
+                Layout.maximumHeight: Layout.preferredHeight
+                TextMetrics { id: dateTitleMetrics; font: dateTitle.font; text: dateTitle.text }
 
                 Label {
                     id: dateTitle
                     objectName: "dateTitle"
-                    anchors.left: parent.left
-                    anchors.leftMargin: root.design.dateBandInset
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Math.max(0, dateNavGroup.x
-                                       - root.design.dateBandInset - 16)
+                    x: root.design.dateBandInset
+                    y: dateBand.stacked ? 6 : (parent.height - height) / 2
+                    width: dateBand.stacked ? parent.width - 2 * root.design.dateBandInset
+                        : Math.max(0, dateNavGroup.x - root.design.dateBandInset - 16)
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
                     text: root.headerTitle()
                     color: root.design.labelPrimary
                     font.pixelSize: root.design.dateTitleSize
@@ -2236,9 +2250,9 @@ KosApplicationWindow {
                 RowLayout {
                     id: dateNavGroup
                     objectName: "dateNavGroup"
-                    anchors.right: parent.right
-                    anchors.rightMargin: root.design.dateBandInset
-                    anchors.verticalCenter: parent.verticalCenter
+                    x: parent.width - width - root.design.dateBandInset
+                    y: dateBand.stacked ? dateTitle.y + dateTitle.height + 4 : (parent.height - height) / 2
+                    height: implicitHeight
                     spacing: 6
 
                     DateNavButton {
@@ -2338,7 +2352,7 @@ KosApplicationWindow {
 
                         Pane {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: root.selectedItems.length === 0 ? 76
+                            Layout.preferredHeight: root.selectedItems.length === 0 ? AppTheme.textExtent(76)
                                 : Math.min(root.height < 680 ? 116 : 148,
                                     44 + root.selectedItems.length * 40)
                             padding: 12
@@ -2357,18 +2371,18 @@ KosApplicationWindow {
                                     Layout.fillWidth: true
                                     text: AppTheme.formatDate(root.selectedDate, Locale.LongFormat)
                                     color: root.design.labelPrimary
-                                    font.pixelSize: 13
+                                    font.pixelSize: AppTheme.fontSize(13)
                                     elide: Text.ElideRight
                                     font.weight: Font.DemiBold
                                 }
                                 Label {
                                     text: qsTr("%n item(s)", "", root.selectedItems.length)
                                     color: AppTheme.mutedText
-                                    font.pixelSize: 11
+                                    font.pixelSize: AppTheme.fontSize(11)
                                 }
                                 Item { Layout.fillWidth: true }
                                 CalendarButton {
-                                    implicitHeight: 24
+                                    implicitHeight: AppTheme.textExtent(30)
                                     text: qsTr("Add")
                                     flat: true
                                     enabled: pim.connected && pim.writable
@@ -2468,7 +2482,7 @@ KosApplicationWindow {
                                             Layout.preferredWidth: Math.max(58, agendaTimeLabel.implicitWidth)
                                             text: root.itemTime(agendaItem.modelData)
                                             color: AppTheme.mutedText
-                                            font.pixelSize: 11
+                                            font.pixelSize: AppTheme.fontSize(11)
                                         }
                                         ColumnLayout {
                                             Layout.fillWidth: true
@@ -2484,7 +2498,7 @@ KosApplicationWindow {
                                             Label {
                                                 text: root.itemSubtitle(agendaItem.modelData)
                                                 color: AppTheme.mutedText
-                                                font.pixelSize: 10
+                                                font.pixelSize: AppTheme.fontSize(10)
                                             }
                                         }
                                         Label {
@@ -2493,7 +2507,7 @@ KosApplicationWindow {
                                                 : (root.itemTodoId(agendaItem.modelData).length > 0
                                                     ? qsTr("EVENT + TASK") : qsTr("Event"))
                                             color: root.design.labelSecondary
-                                            font.pixelSize: 10
+                                            font.pixelSize: AppTheme.fontSize(10)
                                             font.weight: Font.DemiBold
                                         }
                                     }
@@ -2565,12 +2579,18 @@ KosApplicationWindow {
                 Component {
                     id: yearPage
 
-                    // Annual overview: dates open day view, months open month view.
-                    Item {
+                    // Annual overview keeps a readable cell size; narrow windows scroll.
+                    ScrollView {
+                        id: yearScroller
+                        clip: true
+                        contentWidth: availableWidth
+                        contentHeight: yearGrid.implicitHeight + 32
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                         GridLayout {
-                            anchors.fill: parent
-                            anchors.margins: 16
-                            columns: 3
+                            id: yearGrid
+                            x: 16; y: 16
+                            width: yearScroller.availableWidth - 32
+                            columns: Math.max(1, Math.min(3, Math.floor(width / AppTheme.textExtent(160))))
                             columnSpacing: 16
                             rowSpacing: 12
 
@@ -2585,7 +2605,7 @@ KosApplicationWindow {
                                     readonly property int firstOffset:
                                         (monthStart.getDay() - root.localeFirstDayOfWeek + 7) % 7
                                     Layout.fillWidth: true
-                                    Layout.fillHeight: true
+                                    Layout.preferredHeight: AppTheme.textExtent(152)
                                     background: Item {}
 
                                     onClicked: {
@@ -2602,7 +2622,7 @@ KosApplicationWindow {
                                             text: AppTheme.formatDate(
                                                 yearMonthCell.monthStart, "MMMM")
                                             color: root.design.labelPrimary
-                                            font.pixelSize: 12
+                                            font.pixelSize: AppTheme.fontSize(12)
                                             font.weight: Font.DemiBold
                                         }
 
@@ -2683,7 +2703,7 @@ KosApplicationWindow {
                                                             y: (parent.height - yearDateMetrics.tightBoundingRect.height) / 2 - yearDateMetrics.tightBoundingRect.y - baselineOffset
                                                             text: yearDayCell.inMonth ? String(yearDayCell.cellDate.getDate()) : ""
                                                             color: yearDayCell.isToday || yearDayCell.isSelected ? "#FFFFFF" : root.design.labelPrimary
-                                                            font.pixelSize: 10
+                                                            font.pixelSize: AppTheme.fontSize(10)
                                                             font.weight: yearDayCell.isToday || yearDayCell.isSelected ? Font.DemiBold : Font.Normal
                                                         }
                                                     }

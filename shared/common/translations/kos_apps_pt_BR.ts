@@ -1862,4 +1862,111 @@
       <translation>Pesquisar todas as unidades</translation>
     </message>
   </context>
+  <context>
+    <name>CalendarSettingsDialog</name>
+    <message>
+      <source>Calendar settings</source>
+      <translation>Configurações do calendário</translation>
+    </message>
+    <message>
+      <source>Close settings</source>
+      <translation>Fechar configurações</translation>
+    </message>
+    <message>
+      <source>Text size</source>
+      <translation>Tamanho do texto</translation>
+    </message>
+    <message>
+      <source>Adjust text throughout Calendar and Reminders. Medium keeps the original size.</source>
+      <translation>Ajuste o texto no calendário e nos lembretes. Médio mantém o tamanho original.</translation>
+    </message>
+    <message>
+      <source>Extra large</source>
+      <translation>Muito grande</translation>
+    </message>
+    <message>
+      <source>Large</source>
+      <translation>Grande</translation>
+    </message>
+    <message>
+      <source>Medium</source>
+      <translation>Médio</translation>
+    </message>
+    <message>
+      <source>Small</source>
+      <translation>Pequeno</translation>
+    </message>
+    <message>
+      <source>Color scheme</source>
+      <translation>Esquema de cores</translation>
+    </message>
+    <message>
+      <source>Use the same light or dark appearance as the calendar.</source>
+      <translation>Use a mesma aparência clara ou escura do calendário.</translation>
+    </message>
+    <message>
+      <source>System</source>
+      <translation>Sistema</translation>
+    </message>
+    <message>
+      <source>Light</source>
+      <translation>Claro</translation>
+    </message>
+    <message>
+      <source>Dark</source>
+      <translation>Escuro</translation>
+    </message>
+    <message>
+      <source>Material</source>
+      <translation>Material</translation>
+    </message>
+    <message>
+      <source>Choose how floating panels blend with the calendar.</source>
+      <translation>Escolha como os painéis flutuantes se integram ao calendário.</translation>
+    </message>
+    <message>
+      <source>Auto</source>
+      <translation>Automático</translation>
+    </message>
+    <message>
+      <source>Glass</source>
+      <translation>Vidro</translation>
+    </message>
+    <message>
+      <source>Solid</source>
+      <translation>Sólido</translation>
+    </message>
+    <message>
+      <source>Material opacity</source>
+      <translation>Opacidade do material</translation>
+    </message>
+    <message>
+      <source>Accessibility</source>
+      <translation>Acessibilidade</translation>
+    </message>
+    <message>
+      <source>Reduce transparency</source>
+      <translation>Reduzir transparência</translation>
+    </message>
+    <message>
+      <source>Use solid surfaces for easier reading.</source>
+      <translation>Use superfícies opacas para facilitar a leitura.</translation>
+    </message>
+    <message>
+      <source>Reduce motion</source>
+      <translation>Reduzir movimento</translation>
+    </message>
+    <message>
+      <source>Keep transitions simple and reduce movement.</source>
+      <translation>Simplifique as transições e reduza os movimentos.</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>Restaurar padrões</translation>
+    </message>
+    <message>
+      <source>Done</source>
+      <translation>Concluído</translation>
+    </message>
+  </context>
 </TS>

@@ -41,14 +41,14 @@ Demo.LiquidContentPopover {
 
     // P02: one consistent field height for every editor control.
     readonly property int fieldHeight: design.fieldHeight
-    readonly property int labelColumnWidth: 56
+    readonly property int labelColumnWidth: AppTheme.textExtent(118)
 
     title: editing ? qsTr("Edit event") : qsTr("New event")
     modal: false
     popupType: Popup.Item
     // P02/P03: compact editor — 420 wide, and never taller than the client
     // viewport minus margins so the footer stays reachable at 760x540.
-    width: Math.min(288, parent ? parent.width - 16 : 288)
+    width: Math.min(AppTheme.textExtent(360), parent ? parent.width - 24 : AppTheme.textExtent(360))
     height: Math.min((header ? header.implicitHeight : 0) + (footer ? footer.implicitHeight : 0)
         + formLayout.implicitHeight + topPadding + bottomPadding, parent ? parent.height - 16 : 560)
     standardButtons: Dialog.Save | Dialog.Cancel
@@ -59,7 +59,7 @@ Demo.LiquidContentPopover {
     signal switchTypeRequested()
     header: CalendarEditorTabs {
         visible: root.editingId.length === 0
-        implicitHeight: visible ? 55 : 0
+        implicitHeight: visible ? AppTheme.textExtent(28) + 27 : 0
         leftInset: root.leftPadding
         // Match the form width, including its 8px scrollbar gutter.
         rightInset: root.rightPadding + 8
@@ -508,7 +508,7 @@ Demo.LiquidContentPopover {
                 visible: root.errorText.length > 0
                 text: root.errorText
                 color: root.errorColor
-                font.pixelSize: 11
+                font.pixelSize: AppTheme.fontSize(11)
                 wrapMode: Text.WordWrap
             }
 
@@ -565,18 +565,19 @@ Demo.LiquidContentPopover {
                 allowStacking: false
                 Layout.fillWidth: true
                 title: qsTr("Time")
-                minimumLabelWidth: root.labelColumnWidth
+                minimumLabelWidth: AppTheme.textExtent(48)
                 horizontalPadding: 12
                 Button {
                     Layout.preferredWidth: Math.max(0, parent.parent.availableWidth - parent.parent.minimumLabelWidth - parent.parent.controlSpacing)
                     Layout.fillWidth: true
-                    implicitHeight: 36
+                    implicitHeight: Math.max(36, contentItem.implicitHeight + 8)
+                    topPadding: 4; bottomPadding: 4
                     background: Item {}
                     leftPadding: 0
                     rightPadding: 0
                     contentItem: ColumnLayout {
-                        Label { Layout.fillWidth: true; elide: Text.ElideRight; text: startDateField.text + "  " + startTimeField.text + " – " + endTimeField.text; color: design.labelPrimary; font.pixelSize: 11 }
-                        Label { Layout.fillWidth: true; elide: Text.ElideRight; text: root.scheduleExpanded ? qsTr("Hide date and notification options") : qsTr("Date, repeat and notification options"); color: design.labelSecondary; font.pixelSize: 11 }
+                        Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: startDateField.text + "  " + startTimeField.text + " – " + endTimeField.text; color: design.labelPrimary; font.pixelSize: AppTheme.fontSize(11) }
+                        Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: root.scheduleExpanded ? qsTr("Hide date and notification options") : qsTr("Date, repeat and notification options"); color: design.labelSecondary; font.pixelSize: AppTheme.fontSize(11) }
                     }
                     onClicked: root.scheduleExpanded = !root.scheduleExpanded
                 }
@@ -615,6 +616,7 @@ Demo.LiquidContentPopover {
                     font.pixelSize: design.editorInputFontSize
                     font.weight: Font.Normal
                     id: startDateField
+                    objectName: "eventStartDate"
                     Layout.fillWidth: true
                     placeholderText: root.datePattern
                     Accessible.name: qsTr("Start date")
@@ -637,6 +639,7 @@ Demo.LiquidContentPopover {
                     font.pixelSize: design.editorInputFontSize
                     font.weight: Font.Normal
                     id: startTimeField
+                    objectName: "eventStartTime"
                     Layout.fillWidth: true
                     placeholderText: root.timePattern
                     enabled: !allDayCheck.checked
@@ -812,7 +815,7 @@ Demo.LiquidContentPopover {
                     color: root.linkedTodoId.length > 0 && !linkTodoCheck.checked
                         ? (AppTheme.dark ? AppTheme.warning : "#a85c00")
                         : AppTheme.mutedText
-                    font.pixelSize: 11
+                    font.pixelSize: AppTheme.fontSize(11)
                     wrapMode: Text.WordWrap
                 }
 
@@ -821,7 +824,7 @@ Demo.LiquidContentPopover {
                     visible: linkTodoCheck.checked
                     spacing: 8
 
-                    Label { text: qsTr("Todo list") + ":"; Layout.preferredWidth: root.labelColumnWidth; color: AppTheme.mutedText; font.pixelSize: 13; font.weight: Font.Bold }
+                    Label { text: qsTr("Todo list") + ":"; Layout.preferredWidth: root.labelColumnWidth; color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(13); font.weight: Font.Bold }
                     CalendarComboBox {
                         id: todoListBox
                         Layout.fillWidth: true
@@ -829,7 +832,7 @@ Demo.LiquidContentPopover {
                         textRole: "name"
                         Accessible.name: qsTr("Linked todo list")
                     }
-                    Label { text: qsTr("Priority") + ":"; Layout.preferredWidth: root.labelColumnWidth; color: AppTheme.mutedText; font.pixelSize: 13; font.weight: Font.Bold }
+                    Label { text: qsTr("Priority") + ":"; Layout.preferredWidth: root.labelColumnWidth; color: AppTheme.mutedText; font.pixelSize: AppTheme.fontSize(13); font.weight: Font.Bold }
                     CalendarComboBox {
                         id: todoPriorityBox
                         Layout.preferredWidth: 110

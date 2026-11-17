@@ -11,7 +11,7 @@ Foundation.KosDialog {
     property alias contentBackdrop: sceneBackdrop
     property real cornerRadius: 32
     property real materialOpacity: LiquidStyle.panelMaterialOpacity
-    readonly property real actionHeight: 30
+    readonly property real actionHeight: Foundation.AppTheme.textExtent(30)
     property bool reduceTransparency: Foundation.AppTheme.reduceTransparency
     readonly property bool sampling: dialogSurface.sampling
     popupType: Popup.Item
@@ -24,7 +24,7 @@ Foundation.KosDialog {
         topPadding: 20
         bottomPadding: 12
         color: Foundation.AppTheme.text
-        font.pixelSize: Foundation.AppTheme.compactDesign ? 17 : 20
+        font.pixelSize: Foundation.AppTheme.fontSize(Foundation.AppTheme.compactDesign ? 17 : 20)
         font.weight: Font.DemiBold
         elide: Text.ElideRight
     }

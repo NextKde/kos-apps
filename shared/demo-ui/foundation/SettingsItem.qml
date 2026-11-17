@@ -62,7 +62,7 @@ Item {
             visible: text.length > 0
             text: root.title
             color: root.enabled ? root.titleColor : AppTheme.disabledText
-            font.pixelSize: 12
+            font.pixelSize: AppTheme.fontSize(12)
             font.weight: Font.Normal
             wrapMode: root.allowStacking ? Text.Wrap : Text.NoWrap
             elide: Text.ElideRight
@@ -74,7 +74,7 @@ Item {
             visible: text.length > 0
             text: root.description
             color: root.enabled ? root.descriptionColor : AppTheme.withAlpha(root.descriptionColor, .65)
-            font.pixelSize: 10
+            font.pixelSize: AppTheme.fontSize(10)
             font.weight: Font.Normal
             wrapMode: Text.Wrap
             Accessible.ignored: true

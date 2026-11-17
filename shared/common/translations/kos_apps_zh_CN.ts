@@ -2859,4 +2859,111 @@
     <message><source>Add tags</source><translation>添加标签</translation></message>
     <message><source>Flag reminder</source><translation>旗标</translation></message>
 </context>
+  <context>
+    <name>CalendarSettingsDialog</name>
+    <message>
+      <source>Calendar settings</source>
+      <translation>日历设置</translation>
+    </message>
+    <message>
+      <source>Close settings</source>
+      <translation>关闭设置</translation>
+    </message>
+    <message>
+      <source>Text size</source>
+      <translation>字号</translation>
+    </message>
+    <message>
+      <source>Adjust text throughout Calendar and Reminders. Medium keeps the original size.</source>
+      <translation>调整日历和提醒事项的文字大小。“中”保持原有字号。</translation>
+    </message>
+    <message>
+      <source>Extra large</source>
+      <translation>特大</translation>
+    </message>
+    <message>
+      <source>Large</source>
+      <translation>大</translation>
+    </message>
+    <message>
+      <source>Medium</source>
+      <translation>中</translation>
+    </message>
+    <message>
+      <source>Small</source>
+      <translation>小</translation>
+    </message>
+    <message>
+      <source>Color scheme</source>
+      <translation>配色方案</translation>
+    </message>
+    <message>
+      <source>Use the same light or dark appearance as the calendar.</source>
+      <translation>与日历主界面使用一致的浅色或深色外观。</translation>
+    </message>
+    <message>
+      <source>System</source>
+      <translation>跟随系统</translation>
+    </message>
+    <message>
+      <source>Light</source>
+      <translation>浅色</translation>
+    </message>
+    <message>
+      <source>Dark</source>
+      <translation>深色</translation>
+    </message>
+    <message>
+      <source>Material</source>
+      <translation>材质</translation>
+    </message>
+    <message>
+      <source>Choose how floating panels blend with the calendar.</source>
+      <translation>选择浮动面板与日历背景的融合方式。</translation>
+    </message>
+    <message>
+      <source>Auto</source>
+      <translation>自动</translation>
+    </message>
+    <message>
+      <source>Glass</source>
+      <translation>玻璃</translation>
+    </message>
+    <message>
+      <source>Solid</source>
+      <translation>实色</translation>
+    </message>
+    <message>
+      <source>Material opacity</source>
+      <translation>材质不透明度</translation>
+    </message>
+    <message>
+      <source>Accessibility</source>
+      <translation>辅助功能</translation>
+    </message>
+    <message>
+      <source>Reduce transparency</source>
+      <translation>减少透明度</translation>
+    </message>
+    <message>
+      <source>Use solid surfaces for easier reading.</source>
+      <translation>使用不透明背景，让文字更易阅读。</translation>
+    </message>
+    <message>
+      <source>Reduce motion</source>
+      <translation>减少动态效果</translation>
+    </message>
+    <message>
+      <source>Keep transitions simple and reduce movement.</source>
+      <translation>简化过渡动画，减少界面动态效果。</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>恢复默认</translation>
+    </message>
+    <message>
+      <source>Done</source>
+      <translation>完成</translation>
+    </message>
+  </context>
 </TS>

@@ -65,6 +65,25 @@ Item {
     readonly property int safeIndex: clampedIndex(currentIndex)
     readonly property real segmentWidth: labels.length > 0 ? (width - 4) / labels.length : 0
 
+    property int labelRevision: 0
+    readonly property real minimumLabelWidth: {
+        const revision = labelRevision
+        let longest = 0
+        for (let i = 0; i < segments.count; ++i) {
+            const segment = segments.itemAt(i)
+            if (segment) longest = Math.max(longest, segment.naturalLabelWidth)
+        }
+        return Math.ceil(longest + 20) * labels.length + 4
+    }
+    readonly property real minimumLabelHeight: {
+        const revision = labelRevision
+        let tallest = 0
+        for (let i = 0; i < segments.count; ++i) {
+            const segment = segments.itemAt(i)
+            if (segment) tallest = Math.max(tallest, segment.naturalLabelHeight)
+        }
+        return Math.ceil(tallest + 10)
+    }
     signal selectionRequested(int index)
 
     function clampedIndex(index) {
@@ -215,9 +234,20 @@ Item {
 
     Repeater {
         id: segments
+        onItemAdded: root.labelRevision++
+        onItemRemoved: root.labelRevision++
         model: root.labels
         delegate: Item {
             id: segmentDelegate
+            readonly property real naturalLabelWidth: measureLabel.implicitWidth
+            readonly property real naturalLabelHeight: measureLabel.implicitHeight
+            Text {
+                id: measureLabel
+                visible: false
+                text: segmentDelegate.modelData
+                font: Qt.font({family: segmentLabel.font.family, pixelSize: segmentLabel.font.pixelSize,
+                               weight: Math.max(root.fontWeight, root.selectedFontWeight)})
+            }
 
             required property var modelData
             required property int index
@@ -254,6 +284,7 @@ Item {
             }
 
             Text {
+                id: segmentLabel
                 anchors.centerIn: parent
                 width: Math.max(0, parent.width - 16)
                 horizontalAlignment: Text.AlignHCenter
@@ -261,7 +292,7 @@ Item {
                 text: segmentDelegate.modelData
                 color: segmentDelegate.index === root._visualIndex
                     ? root.textColor : root.mutedTextColor
-                font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : 12
+                font.pixelSize: Foundation.AppTheme.compactDesign ? Foundation.AppTheme.compactControlFontSize : Foundation.AppTheme.fontSize(12)
                 font.weight: segmentDelegate.index === root._visualIndex
                     ? root.selectedFontWeight : root.fontWeight
                 scale: root._pressedIndex === segmentDelegate.index ? 0.96 : 1.0

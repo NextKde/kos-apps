@@ -84,6 +84,43 @@ private Q_SLOTS:
         QCOMPARE(preferences.effectiveMaterialOpacity(), 1.0);
     }
 
+    void textSizePersistsAndNotifiesWithoutChangingAppearance()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("calendar.ini"));
+        ApplicationPreferences writer(path);
+        QCOMPARE(writer.textSize(), QStringLiteral("medium"));
+        writer.setAppearanceMode(QStringLiteral("dark"));
+        QSignalSpy changes(&writer, &ApplicationPreferences::preferencesChanged);
+        for (const QString &size : {QStringLiteral("extra-large"), QStringLiteral("large"),
+                                   QStringLiteral("small"), QStringLiteral("medium")}) {
+            writer.setTextSize(size);
+            ApplicationPreferences restarted(path);
+            QCOMPARE(restarted.textSize(), size);
+            QCOMPARE(restarted.appearanceMode(), QStringLiteral("dark"));
+        }
+        QCOMPARE(changes.count(), 4);
+        writer.setTextSize(QStringLiteral("large"));
+        writer.setTextSize(QStringLiteral("invalid"));
+        QCOMPARE(writer.textSize(), QStringLiteral("medium"));
+        QSettings damaged(path, QSettings::IniFormat);
+        damaged.setValue(QStringLiteral("Typography/size"), QStringLiteral("giant"));
+        damaged.sync();
+        ApplicationPreferences restarted(path);
+        QCOMPARE(restarted.textSize(), QStringLiteral("medium"));
+    }
+
+    void runningInstanceObservesTextSizeChange()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("calendar.ini"));
+        ApplicationPreferences reader(path), writer(path);
+        QSignalSpy changed(&reader, &ApplicationPreferences::preferencesChanged);
+        writer.setTextSize(QStringLiteral("extra-large"));
+        QTRY_VERIFY_WITH_TIMEOUT(changed.count() > 0, 2500);
+        QCOMPARE(reader.textSize(), QStringLiteral("extra-large"));
+    }
+
     void runningInstancesObserveSharedChanges()
     {
         QTemporaryDir directory;
